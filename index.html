@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- Open Graph para compartir en redes sociales -->
+    <meta property="og:title" content="🌻 Recibe tu Flor Amarilla 🌻" />
+    <meta property="og:description" content="Reclama tu flor amarilla y compártela con tus amigos en el Día de la Primavera." />
+    <meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/4/40/Sunflower_sky_backdrop.jpg" />
+    <meta property="og:url" content="https://smallerdam-cpu.github.io/recibe-tu-flor-amarilla-por-smith/" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>🌻 Recibe tu Flor Amarilla 🌻</title>
@@ -540,6 +545,12 @@
 </head>
 <body>
 
+  <!-- Contador de visitas -->
+  <div id="contador-visitas" style="position:fixed; bottom:24px; left:24px; background:rgba(255,255,255,0.92); border-radius:14px; box-shadow:0 2px 12px rgba(255,193,7,0.13); padding:8px 18px; z-index:10; font-size:1.05rem; color:#b8860b; font-family:'Poppins',sans-serif;">
+    Visitantes: <span id="visitas-num">...</span>
+    <button onclick="sumarVisitaManual()" style="margin-left:10px; background:#ffd54f; border:none; border-radius:8px; padding:2px 10px; cursor:pointer; color:#6d4c41; font-size:0.95rem;">+1</button>
+  </div>
+
   <!-- Perfil del creador -->
   <div class="perfil-creador">
     <img src="https://files.catbox.moe/qruetg.png" alt="Foto de perfil del creador" />
@@ -736,6 +747,46 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
   <script>
+
+            // === CONTADOR DE VISITAS FIRESTORE ===
+            function actualizarContadorVisitas() {
+                // === AQUÍ SE MANIPULAN LAS VISITAS EN FIRESTORE ===
+              const docRef = db.collection('contador').doc('visitas');
+              docRef.get().then(function(doc) {
+                let visitas = 0;
+                if (doc.exists && typeof doc.data().total === 'number') {
+                  visitas = doc.data().total;
+                }
+                document.getElementById('visitas-num').textContent = visitas > 0 ? visitas : 'Nadie ha visitado :('; 
+              });
+            }
+
+            function sumarVisita() {
+              const docRef = db.collection('contador').doc('visitas');
+              db.runTransaction(function(transaction) {
+                return transaction.get(docRef).then(function(doc) {
+                  let nuevo = 1;
+                  if (doc.exists && typeof doc.data().total === 'number') {
+                    nuevo = doc.data().total + 1;
+                  }
+                  transaction.set(docRef, { total: nuevo });
+                  return nuevo;
+                });
+              }).then(function() {
+                actualizarContadorVisitas();
+              });
+            }
+
+            // Botón para sumar visita manualmente
+            function sumarVisitaManual() {
+              sumarVisita();
+            }
+
+            // Sumar visita automáticamente al cargar la página
+            window.addEventListener('DOMContentLoaded', function() {
+              sumarVisita();
+              actualizarContadorVisitas();
+            });
         // Función para obtener el mensaje personalizado y el enlace
         function getMensajeFlor() {
           const nombre = nombreUsuario ? nombreUsuario : '¡Recibí mi flor amarilla!';
