@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌻 Recibe tu Flor Amarilla 🌻</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* =============================================
+       RESET Y BASE
+    ============================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #fff9c4 0%, #ffe082 40%, #ffca28 70%, #fff176 100%);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* =============================================
+       PARTÍCULAS / PÉTALOS FLOTANTES
+    ============================================= */
+    .petal {
+      position: fixed;
+      top: -40px;
+      width: 18px;
+      height: 18px;
+      background: radial-gradient(circle at 40% 35%, #ffe57a, #ffd700);
+      border-radius: 50% 50% 50% 0;
+      opacity: 0;
+      animation: caerPetalo linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes caerPetalo {
+      0%   { transform: translateY(0) rotate(0deg);   opacity: 0; }
+      10%  { opacity: 0.7; }
+      90%  { opacity: 0.5; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* =============================================
+       CONTENEDOR PRINCIPAL
+    ============================================= */
+    #app {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 16px 40px;
+    }
+
+    /* =============================================
+       PANTALLAS (mostrar/ocultar)
+    ============================================= */
+    .pantalla {
+      display: none;
+      width: 100%;
+      max-width: 560px;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .pantalla.activa {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* =============================================
+       TARJETA / CARD
+    ============================================= */
+    .card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      border-radius: 28px;
+      padding: 36px 32px;
+      box-shadow: 0 8px 40px rgba(255, 193, 7, 0.3), 0 2px 12px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+
+    /* =============================================
+       TIPOGRAFÍA
+    ============================================= */
+    h1 {
+      font-family: 'Dancing Script', cursive;
+      font-size: clamp(2rem, 6vw, 3rem);
+      color: #b8860b;
+      text-shadow: 2px 2px 6px rgba(255,200,0,0.4);
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-family: 'Dancing Script', cursive;
+      font-size: clamp(1.5rem, 4.5vw, 2.2rem);
+      color: #8b6914;
+      margin-bottom: 20px;
+    }
+
+    .subtitulo {
+      font-size: 1rem;
+      color: #6d4c41;
+      margin-bottom: 28px;
+      font-weight: 300;
+    }
+
+    /* =============================================
+       INPUT DE TEXTO
+    ============================================= */
+    .input-bonito {
+      width: 100%;
+      padding: 14px 20px;
+      border: 2px solid #ffd54f;
+      border-radius: 50px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      color: #5d4037;
+      background: #fffde7;
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      margin-bottom: 20px;
+    }
+
+    .input-bonito:focus {
+      border-color: #ffc107;
+      box-shadow: 0 0 0 4px rgba(255,193,7,0.2);
+    }
+
+    .input-bonito::placeholder {
+      color: #bfa76a;
+    }
+
+    /* =============================================
+       BOTONES
+    ============================================= */
+    .btn-principal {
+      display: inline-block;
+      padding: 14px 40px;
+      background: linear-gradient(135deg, #ffd700, #ffc107);
+      color: #5d4037;
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(255,193,7,0.5);
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-principal:hover {
+      transform: translateY(-3px) scale(1.04);
+      box-shadow: 0 8px 28px rgba(255,193,7,0.6);
+    }
+
+    .btn-principal:active {
+      transform: scale(0.97);
+    }
+
+    /* Opciones de respuesta */
+    .opciones {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    .btn-opcion {
+      padding: 18px 12px;
+      background: linear-gradient(135deg, #fffde7, #fff9c4);
+      border: 2px solid #ffd54f;
+      border-radius: 18px;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #6d4c41;
+      transition: all 0.2s;
+      box-shadow: 0 2px 10px rgba(255,193,7,0.15);
+    }
+
+    .btn-opcion:hover {
+      background: linear-gradient(135deg, #ffd700, #ffc107);
+      color: #fff;
+      border-color: #ffc107;
+      transform: translateY(-3px) scale(1.04);
+      box-shadow: 0 6px 20px rgba(255,193,7,0.45);
+    }
+
+    .btn-opcion:active {
+      transform: scale(0.96);
+    }
+
+    /* =============================================
+       EMOJI DECORATIVO
+    ============================================= */
+    .emoji-grande {
+      font-size: 3rem;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    /* =============================================
+       RANKING
+    ============================================= */
+    #seccion-ranking {
+      width: 100%;
+      max-width: 560px;
+      margin-top: 36px;
+    }
+
+    .ranking-card {
+      background: rgba(255,255,255,0.82);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      padding: 24px 20px;
+      box-shadow: 0 4px 24px rgba(255,193,7,0.2);
+    }
+
+    .ranking-card h3 {
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.6rem;
+      color: #b8860b;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    #lista-ranking {
+      list-style: none;
+    }
+
+    #lista-ranking li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: linear-gradient(90deg, #fffde7, #fff8e1);
+      margin-bottom: 8px;
+      font-size: 0.92rem;
+      color: #5d4037;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    #lista-ranking li:hover {
+      transform: translateX(4px);
+    }
+
+    .ranking-num {
+      font-weight: 700;
+      color: #b8860b;
+      min-width: 28px;
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    .ranking-nombre {
+      flex: 1;
+      font-weight: 600;
+    }
+
+    .ranking-fecha {
+      font-size: 0.8rem;
+      color: #8d6e63;
+      white-space: nowrap;
+    }
+
+    .ranking-vacio {
+      text-align: center;
+      color: #bfa76a;
+      font-size: 0.95rem;
+      padding: 12px 0;
+    }
+
+    /* =============================================
+       PANTALLA DE CARGANDO
+    ============================================= */
+    #pantalla-cargando {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .puntos-animados::after {
+      content: '';
+      animation: puntos 1.5s steps(4, end) infinite;
+    }
+
+    @keyframes puntos {
+      0%  { content: ''; }
+      25% { content: '.'; }
+      50% { content: '..'; }
+      75% { content: '...'; }
+    }
+
+    /* =============================================
+       FLOR CSS (pantalla del regalo)
+    ============================================= */
+    .contenedor-flor {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      height: 240px;
+      margin: 24px auto;
+      animation: florecerFlor 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      transform: scale(0);
+    }
+
+    @keyframes florecerFlor {
+      0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+      60%  { transform: scale(1.12) rotate(3deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    .flor {
+      position: relative;
+      width: 120px;
+      animation: mecerse 3s ease-in-out infinite 1.5s;
+    }
+
+    @keyframes mecerse {
+      0%, 100% { transform: rotate(0deg); transform-origin: bottom center; }
+      25%       { transform: rotate(4deg); transform-origin: bottom center; }
+      75%       { transform: rotate(-4deg); transform-origin: bottom center; }
+    }
+
+    /* Tallo */
+    .tallo {
+      width: 8px;
+      height: 100px;
+      background: linear-gradient(180deg, #66bb6a, #388e3c);
+      margin: 0 auto;
+      border-radius: 4px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Hoja izquierda */
+    .hoja-izq {
+      position: absolute;
+      width: 36px;
+      height: 20px;
+      background: linear-gradient(135deg, #81c784, #43a047);
+      border-radius: 50% 0 50% 0;
+      top: 30px;
+      left: -30px;
+      transform: rotate(-30deg);
+    }
+
+    /* Hoja derecha */
+    .hoja-der {
+      position: absolute;
+      width: 36px;
+      height: 20px;
+      background: linear-gradient(135deg, #81c784, #43a047);
+      border-radius: 0 50% 0 50%;
+      top: 55px;
+      right: -30px;
+      transform: rotate(30deg);
+    }
+
+    /* Pétalos */
+    .petalos {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      margin: 0 auto;
+    }
+
+    .petalo {
+      position: absolute;
+      width: 44px;
+      height: 60px;
+      background: radial-gradient(ellipse at 50% 25%, #fff176, #ffd700 55%, #ffb300);
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      left: 50%;
+      top: 50%;
+      transform-origin: 50% 100%;
+      box-shadow: inset 0 -4px 8px rgba(255,160,0,0.3);
+    }
+
+    /* 8 pétalos distribuidos */
+    .petalo:nth-child(1) { transform: translate(-50%, -100%) rotate(0deg);   animation: brillarPetalo 2.5s ease-in-out infinite 0s; }
+    .petalo:nth-child(2) { transform: translate(-50%, -100%) rotate(45deg);  animation: brillarPetalo 2.5s ease-in-out infinite 0.3s; }
+    .petalo:nth-child(3) { transform: translate(-50%, -100%) rotate(90deg);  animation: brillarPetalo 2.5s ease-in-out infinite 0.6s; }
+    .petalo:nth-child(4) { transform: translate(-50%, -100%) rotate(135deg); animation: brillarPetalo 2.5s ease-in-out infinite 0.9s; }
+    .petalo:nth-child(5) { transform: translate(-50%, -100%) rotate(180deg); animation: brillarPetalo 2.5s ease-in-out infinite 1.2s; }
+    .petalo:nth-child(6) { transform: translate(-50%, -100%) rotate(225deg); animation: brillarPetalo 2.5s ease-in-out infinite 1.5s; }
+    .petalo:nth-child(7) { transform: translate(-50%, -100%) rotate(270deg); animation: brillarPetalo 2.5s ease-in-out infinite 1.8s; }
+    .petalo:nth-child(8) { transform: translate(-50%, -100%) rotate(315deg); animation: brillarPetalo 2.5s ease-in-out infinite 2.1s; }
+
+    @keyframes brillarPetalo {
+      0%, 100% { filter: brightness(1); }
+      50%       { filter: brightness(1.25) drop-shadow(0 0 6px #ffd700); }
+    }
+
+    /* Centro de la flor */
+    .centro-flor {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background: radial-gradient(circle at 40% 40%, #ffe082, #f57c00);
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      box-shadow: 0 0 12px rgba(245,124,0,0.5), inset 0 2px 4px rgba(255,255,255,0.4);
+      animation: pulsarCentro 2s ease-in-out infinite;
+    }
+
+    @keyframes pulsarCentro {
+      0%, 100% { box-shadow: 0 0 12px rgba(245,124,0,0.5); }
+      50%       { box-shadow: 0 0 24px rgba(255,193,7,0.9); }
+    }
+
+    /* =============================================
+       PANTALLA DEL REGALO - textos
+    ============================================= */
+    .texto-regalo-nombre {
+      font-family: 'Dancing Script', cursive;
+      font-size: clamp(1.4rem, 5vw, 2rem);
+      color: #b8860b;
+      margin-bottom: 6px;
+    }
+
+    .texto-regalo-sub {
+      font-size: 0.95rem;
+      color: #6d4c41;
+      margin: 6px 0;
+    }
+
+    .texto-smith {
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.3rem;
+      color: #c8920b;
+      margin-top: 8px;
+    }
+
+    /* =============================================
+       BARRA DE PROGRESO DE PREGUNTAS
+    ============================================= */
+    .barra-progreso {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .barra-progreso span {
+      width: 28px;
+      height: 6px;
+      border-radius: 3px;
+      background: #ffe082;
+      transition: background 0.4s;
+    }
+
+    .barra-progreso span.completado {
+      background: #ffa000;
+    }
+
+    /* =============================================
+       RESPONSIVE
+    ============================================= */
+    @media (max-width: 480px) {
+      .card {
+        padding: 28px 18px;
+      }
+      .opciones {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .btn-opcion {
+        font-size: 0.88rem;
+        padding: 14px 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Pétalos decorativos (generados con JS) -->
+  <div id="petales-container"></div>
+
+  <div id="app">
+
+    <!-- ==========================================
+         PANTALLA 1: BIENVENIDA + RANKING
+    =========================================== -->
+    <div id="pantalla-1" class="pantalla activa">
+      <div class="card">
+        <span class="emoji-grande">🌻</span>
+        <h1>Recibe tu Flor Amarilla</h1>
+        <p class="subtitulo">21 de Marzo — Día de la Primavera 🌸</p>
+
+        <input
+          id="input-nombre"
+          class="input-bonito"
+          type="text"
+          placeholder="✍️ Ingresa tu nombre..."
+          maxlength="40"
+          autocomplete="off"
+        />
+        <button class="btn-principal" onclick="irAPregunta1()">Siguiente ➡️</button>
+      </div>
+
+      <!-- Ranking en tiempo real -->
+      <div id="seccion-ranking">
+        <div class="ranking-card">
+          <h3>🏆 Ranking — Flores Entregadas</h3>
+          <ul id="lista-ranking">
+            <li class="ranking-vacio">Cargando ranking...</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         PANTALLA 2: PREGUNTA 1 - COLOR FAVORITO
+    =========================================== -->
+    <div id="pantalla-2" class="pantalla">
+      <div class="card">
+        <div class="barra-progreso">
+          <span id="p-1" class="completado"></span>
+          <span id="p-2"></span>
+          <span id="p-3"></span>
+          <span id="p-4"></span>
+        </div>
+        <span class="emoji-grande">🎨</span>
+        <h2>¿Cuál es tu color favorito?</h2>
+        <div class="opciones">
+          <button class="btn-opcion" onclick="seleccionarColor('Rosa')">🌸 Rosa</button>
+          <button class="btn-opcion" onclick="seleccionarColor('Azul')">💙 Azul</button>
+          <button class="btn-opcion" onclick="seleccionarColor('Amarillo')">💛 Amarillo</button>
+          <button class="btn-opcion" onclick="seleccionarColor('Morado')">💜 Morado</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         PANTALLA 3: PREGUNTA 2 - MASCOTA
+    =========================================== -->
+    <div id="pantalla-3" class="pantalla">
+      <div class="card">
+        <div class="barra-progreso">
+          <span class="completado"></span>
+          <span class="completado"></span>
+          <span></span>
+          <span></span>
+        </div>
+        <span class="emoji-grande">🐾</span>
+        <h2>¿Qué mascota te gusta más?</h2>
+        <div class="opciones">
+          <button class="btn-opcion" onclick="seleccionarMascota('Perrito')">🐶 Perrito</button>
+          <button class="btn-opcion" onclick="seleccionarMascota('Gatito')">🐱 Gatito</button>
+          <button class="btn-opcion" onclick="seleccionarMascota('Conejito')">🐰 Conejito</button>
+          <button class="btn-opcion" onclick="seleccionarMascota('Hamster')">🐹 Hamster</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         PANTALLA 4: PREGUNTA 3 - FECHA ESPECIAL
+    =========================================== -->
+    <div id="pantalla-4" class="pantalla">
+      <div class="card">
+        <div class="barra-progreso">
+          <span class="completado"></span>
+          <span class="completado"></span>
+          <span class="completado"></span>
+          <span></span>
+        </div>
+        <span class="emoji-grande">📅</span>
+        <h2>¿Cuál es tu fecha especial?</h2>
+        <input
+          id="input-fecha"
+          class="input-bonito"
+          type="text"
+          placeholder="✍️ Tu fecha o motivo especial..."
+          maxlength="60"
+          autocomplete="off"
+        />
+        <button class="btn-principal" onclick="irAPregunta4()">Siguiente ➡️</button>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         PANTALLA 5: PREGUNTA 4 - MÚSICA
+    =========================================== -->
+    <div id="pantalla-5" class="pantalla">
+      <div class="card">
+        <div class="barra-progreso">
+          <span class="completado"></span>
+          <span class="completado"></span>
+          <span class="completado"></span>
+          <span class="completado"></span>
+        </div>
+        <span class="emoji-grande">🎵</span>
+        <h2>¿Qué música prefieres?</h2>
+        <div class="opciones">
+          <button class="btn-opcion" onclick="seleccionarMusica('Pop')">🎤 Pop</button>
+          <button class="btn-opcion" onclick="seleccionarMusica('Reggaetón')">🔥 Reggaetón</button>
+          <button class="btn-opcion" onclick="seleccionarMusica('Rock')">🎸 Rock</button>
+          <button class="btn-opcion" onclick="seleccionarMusica('Romántica')">💕 Romántica</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         PANTALLA 6: CARGANDO → REGALO
+    =========================================== -->
+    <div id="pantalla-6" class="pantalla">
+
+      <!-- Estado: cargando -->
+      <div id="estado-cargando" class="card" style="padding:60px 32px;">
+        <span class="emoji-grande" style="font-size:3.5rem;">🎁</span>
+        <h2 style="margin-bottom:0;">Preparando tu regalo<span class="puntos-animados"></span></h2>
+      </div>
+
+      <!-- Estado: regalo listo (oculto hasta que termine la animación) -->
+      <div id="estado-regalo" class="card" style="display:none;">
+        <p class="texto-regalo-nombre" id="saludo-nombre">✨ , aquí tienes tu flor amarilla ✨</p>
+
+        <!-- Flor CSS animada -->
+        <div class="contenedor-flor" id="contenedor-flor">
+          <div class="flor">
+            <div class="petalos">
+              <div class="petalo"></div>
+              <div class="petalo"></div>
+              <div class="petalo"></div>
+              <div class="petalo"></div>
+              <div class="petalo"></div>
+              <div class="petalo"></div>
+              <div class="petalo"></div>
+              <div class="petalo"></div>
+              <div class="centro-flor"></div>
+            </div>
+            <div class="tallo">
+              <div class="hoja-izq"></div>
+              <div class="hoja-der"></div>
+            </div>
+          </div>
+        </div>
+
+        <p class="texto-regalo-sub">Feliz día de la primavera 🌸</p>
+        <p class="texto-smith">Con cariño, de Smith 💛</p>
+
+        <br/>
+        <button class="btn-principal" onclick="volverAlInicio()">🏠 Volver al inicio</button>
+      </div>
+
+    </div>
+
+  </div><!-- /app -->
+
+  <!-- =============================================
+       FIREBASE v9 VIA CDN (compat mode)
+  ============================================= -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <script>
+    /* =============================================
+       CONFIGURACIÓN FIREBASE
+    ============================================= */
+    const firebaseConfig = {
+      apiKey: "AIzaSyDDvR37fgFMTPZBIs3OEqL5qk00A7ejXXs",
+      authDomain: "mipaginaweb-14d2e.firebaseapp.com",
+      projectId: "mipaginaweb-14d2e",
+      storageBucket: "mipaginaweb-14d2e.firebasestorage.app",
+      messagingSenderId: "540722474978",
+      appId: "1:540722474978:web:9825b39baffcf7bb02d3bb",
+      measurementId: "G-XFXEXB982T"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    /* =============================================
+       ESTADO DE LA APLICACIÓN
+    ============================================= */
+    let nombreUsuario  = '';
+    let colorFavorito  = '';
+    let mascotaFav     = '';
+    let fechaEspecial  = '';
+    let musicaFav      = '';
+
+    /* =============================================
+       PÉTALOS FLOTANTES (decoración)
+    ============================================= */
+    (function crearPetalos() {
+      const contenedor = document.getElementById('petales-container');
+      const total = 18;
+      for (let i = 0; i < total; i++) {
+        const p = document.createElement('div');
+        p.classList.add('petal');
+        const left     = Math.random() * 100;
+        const dur      = 8 + Math.random() * 10;
+        const delay    = Math.random() * 14;
+        const size     = 10 + Math.random() * 14;
+        p.style.left      = left + 'vw';
+        p.style.width     = size + 'px';
+        p.style.height    = size + 'px';
+        p.style.animationDuration  = dur + 's';
+        p.style.animationDelay     = delay + 's';
+        // Alterna entre formas/colores
+        const hue = 40 + Math.floor(Math.random() * 20);
+        p.style.background = `radial-gradient(circle at 40% 35%, hsl(${hue},100%,75%), hsl(${hue},90%,55%))`;
+        contenedor.appendChild(p);
+      }
+    })();
+
+    /* =============================================
+       RANKING EN TIEMPO REAL (onSnapshot)
+    ============================================= */
+    function iniciarRanking() {
+      db.collection('flores_entregadas')
+        .orderBy('fecha', 'desc')
+        .onSnapshot(function(snapshot) {
+          const lista = document.getElementById('lista-ranking');
+          lista.innerHTML = '';
+
+          if (snapshot.empty) {
+            lista.innerHTML = '<li class="ranking-vacio">¡Sé la primera en recibir tu flor! 🌻</li>';
+            return;
+          }
+
+          let contador = 1;
+          snapshot.forEach(function(doc) {
+            const datos   = doc.data();
+            const nombre  = datos.nombre || 'Anónima';
+            // Formatear fecha
+            let fechaStr  = '';
+            if (datos.fecha && datos.fecha.toDate) {
+              const d = datos.fecha.toDate();
+              fechaStr = d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })
+                       + ' ' + d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+            }
+
+            const li    = document.createElement('li');
+
+            const spanNum    = document.createElement('span');
+            spanNum.className = 'ranking-num';
+            spanNum.textContent = String(contador);
+
+            const spanNombre    = document.createElement('span');
+            spanNombre.className = 'ranking-nombre';
+            spanNombre.textContent = '🌻 ' + nombre;
+
+            const spanFecha    = document.createElement('span');
+            spanFecha.className = 'ranking-fecha';
+            spanFecha.textContent = fechaStr;
+
+            li.appendChild(spanNum);
+            li.appendChild(spanNombre);
+            li.appendChild(spanFecha);
+            lista.appendChild(li);
+            contador++;
+          });
+        }, function(error) {
+          console.error('Error en ranking:', error);
+          const lista = document.getElementById('lista-ranking');
+          lista.innerHTML = '<li class="ranking-vacio">No se pudo cargar el ranking.</li>';
+        });
+    }
+
+    /**
+     * Escapa caracteres HTML especiales para prevenir XSS al insertar
+     * texto de usuario dentro de innerHTML.
+     * @param {string} texto - Texto a sanitizar.
+     * @returns {string} Texto con entidades HTML escapadas.
+     */
+    function escapeHtml(texto) {
+      const div = document.createElement('div');
+      div.appendChild(document.createTextNode(texto));
+      return div.innerHTML;
+    }
+
+    // Arrancar el ranking al cargar la página
+    iniciarRanking();
+
+    /* =============================================
+       NAVEGACIÓN ENTRE PANTALLAS
+    ============================================= */
+    function mostrarPantalla(id) {
+      document.querySelectorAll('.pantalla').forEach(function(p) {
+        p.classList.remove('activa');
+      });
+      const siguiente = document.getElementById(id);
+      siguiente.classList.add('activa');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* =============================================
+       PANTALLA 1 → PANTALLA 2
+    ============================================= */
+    function irAPregunta1() {
+      const val = document.getElementById('input-nombre').value.trim();
+      if (!val) {
+        document.getElementById('input-nombre').focus();
+        document.getElementById('input-nombre').style.borderColor = '#ef5350';
+        setTimeout(function() {
+          document.getElementById('input-nombre').style.borderColor = '#ffd54f';
+        }, 1500);
+        return;
+      }
+      nombreUsuario = val;
+      mostrarPantalla('pantalla-2');
+    }
+
+    /* =============================================
+       PANTALLA 2 → PANTALLA 3 (color favorito)
+    ============================================= */
+    function seleccionarColor(color) {
+      colorFavorito = color;
+      mostrarPantalla('pantalla-3');
+    }
+
+    /* =============================================
+       PANTALLA 3 → PANTALLA 4 (mascota)
+    ============================================= */
+    function seleccionarMascota(mascota) {
+      mascotaFav = mascota;
+      mostrarPantalla('pantalla-4');
+    }
+
+    /* =============================================
+       PANTALLA 4 → PANTALLA 5 (fecha especial)
+    ============================================= */
+    function irAPregunta4() {
+      const val = document.getElementById('input-fecha').value.trim();
+      if (!val) {
+        document.getElementById('input-fecha').focus();
+        document.getElementById('input-fecha').style.borderColor = '#ef5350';
+        setTimeout(function() {
+          document.getElementById('input-fecha').style.borderColor = '#ffd54f';
+        }, 1500);
+        return;
+      }
+      fechaEspecial = val;
+      mostrarPantalla('pantalla-5');
+    }
+
+    /* =============================================
+       PANTALLA 5 → PANTALLA 6 (música → regalo)
+    ============================================= */
+    function seleccionarMusica(musica) {
+      musicaFav = musica;
+      mostrarPantalla('pantalla-6');
+      mostrarRegalo();
+    }
+
+    /* =============================================
+       PANTALLA 6: ANIMACIÓN DE CARGA + GUARDAR EN FIRESTORE
+    ============================================= */
+    function mostrarRegalo() {
+      // Mostrar el estado de cargando
+      document.getElementById('estado-cargando').style.display = 'block';
+      document.getElementById('estado-regalo').style.display   = 'none';
+
+      // Guardar en Firestore (no esperar a que termine para mostrar el regalo)
+      guardarEnFirestore();
+
+      // Después de 2.5s mostrar el regalo
+      setTimeout(function() {
+        document.getElementById('estado-cargando').style.display = 'none';
+        const regaloDiv = document.getElementById('estado-regalo');
+        regaloDiv.style.display = 'block';
+
+        // Personalizar el saludo
+        document.getElementById('saludo-nombre').textContent =
+          '✨ ' + nombreUsuario + ', aquí tienes tu flor amarilla ✨';
+
+        // Reiniciar la animación de la flor
+        const contenedor = document.getElementById('contenedor-flor');
+        contenedor.style.animation = 'none';
+        // Forzar reflow para reiniciar la animación CSS
+        void contenedor.offsetWidth;
+        contenedor.style.animation = '';
+      }, 2500);
+    }
+
+    /* =============================================
+       GUARDAR EN FIRESTORE
+    ============================================= */
+    function guardarEnFirestore() {
+      db.collection('flores_entregadas').add({
+        nombre: nombreUsuario,
+        fecha: firebase.firestore.FieldValue.serverTimestamp(),
+        color: colorFavorito,
+        mascota: mascotaFav,
+        fechaEspecial: fechaEspecial,
+        musica: musicaFav
+      }).then(function() {
+        console.log('🌻 Flor guardada para:', nombreUsuario);
+      }).catch(function(error) {
+        console.error('Error guardando en Firestore:', error);
+      });
+    }
+
+    /* =============================================
+       VOLVER AL INICIO
+    ============================================= */
+    function volverAlInicio() {
+      // Limpiar campos
+      document.getElementById('input-nombre').value = '';
+      document.getElementById('input-fecha').value  = '';
+      nombreUsuario = '';
+      colorFavorito = '';
+      mascotaFav    = '';
+      fechaEspecial = '';
+      musicaFav     = '';
+
+      mostrarPantalla('pantalla-1');
+    }
+
+    /* =============================================
+       PERMITIR ENTER EN INPUTS
+    ============================================= */
+    document.getElementById('input-nombre').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') irAPregunta1();
+    });
+
+    document.getElementById('input-fecha').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') irAPregunta4();
+    });
+  </script>
+</body>
+</html>
