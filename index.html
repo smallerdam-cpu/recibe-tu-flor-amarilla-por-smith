@@ -11,6 +11,49 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
 
   <style>
+        /* =============================================
+           PERFIL DEL CREADOR
+        ============================================= */
+        .perfil-creador {
+          position: fixed;
+          top: 24px;
+          left: 24px;
+          display: flex;
+          align-items: center;
+          background: rgba(255,255,255,0.92);
+          border-radius: 18px;
+          box-shadow: 0 2px 12px rgba(255,193,7,0.13);
+          padding: 10px 18px 10px 10px;
+          z-index: 10;
+          gap: 12px;
+          min-width: 180px;
+          max-width: 260px;
+        }
+        .perfil-creador img {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 2px solid #ffd54f;
+          box-shadow: 0 1px 6px rgba(255,193,7,0.18);
+        }
+        .perfil-info {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+        .perfil-nombre {
+          font-family: 'Dancing Script', cursive;
+          font-size: 1.1rem;
+          color: #b8860b;
+          font-weight: 700;
+          margin-bottom: 2px;
+        }
+        .perfil-compania {
+          font-size: 0.92rem;
+          color: #6d4c41;
+          font-weight: 400;
+        }
     /* =============================================
        RESET Y BASE
     ============================================= */
@@ -496,6 +539,15 @@
   </style>
 </head>
 <body>
+
+  <!-- Perfil del creador -->
+  <div class="perfil-creador">
+    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Foto de perfil del creador" />
+    <div class="perfil-info">
+      <span class="perfil-nombre">Smith Hernández</span>
+      <span class="perfil-compania">Compañía: Creativos Digitales</span>
+    </div>
+  </div>
 
   <!-- Pétalos decorativos (generados con JS) -->
   <div id="petales-container"></div>
