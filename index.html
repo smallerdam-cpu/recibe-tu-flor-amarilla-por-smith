@@ -542,10 +542,10 @@
 
   <!-- Perfil del creador -->
   <div class="perfil-creador">
-    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Foto de perfil del creador" />
+    <img src="https://files.catbox.moe/qruetg.png" alt="Foto de perfil del creador" />
     <div class="perfil-info">
-      <span class="perfil-nombre">Smith Hernández</span>
-      <span class="perfil-compania">Compañía: Creativos Digitales</span>
+      <span class="perfil-nombre">Roberto Smith Hernandez</span>
+      <span class="perfil-compania">Infra-Red Company</span>
     </div>
   </div>
 
@@ -715,6 +715,12 @@
         <p class="texto-regalo-sub">Feliz día de la primavera 🌸</p>
         <p class="texto-smith">Con cariño, de Smith 💛</p>
 
+        <!-- Botones de compartir -->
+        <div style="margin: 18px 0 0 0; display: flex; flex-direction: column; gap: 10px; align-items: center;">
+          <button class="btn-principal" style="background: #25d366; color: #fff;" onclick="compartirWhatsApp()">Compartir en WhatsApp</button>
+          <button class="btn-principal" style="background: #4267B2; color: #fff;" onclick="compartirFacebook()">Compartir en Facebook</button>
+        </div>
+
         <br/>
         <button class="btn-principal" onclick="volverAlInicio()">🏠 Volver al inicio</button>
       </div>
@@ -730,6 +736,28 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
   <script>
+        // Función para obtener el mensaje personalizado y el enlace
+        function getMensajeFlor() {
+          const nombre = nombreUsuario ? nombreUsuario : '¡Recibí mi flor amarilla!';
+          const mensaje = `${nombre} ya reclamó su flor amarilla 🌻 en el Día de la Primavera. ¡Tú también puedes recibir la tuya!`;
+          const url = window.location.origin + window.location.pathname;
+          return { mensaje, url };
+        }
+
+        // Compartir en WhatsApp
+        function compartirWhatsApp() {
+          const { mensaje, url } = getMensajeFlor();
+          const texto = encodeURIComponent(`${mensaje}\n${url}`);
+          const link = `https://wa.me/?text=${texto}`;
+          window.open(link, '_blank');
+        }
+
+        // Compartir en Facebook
+        function compartirFacebook() {
+          const { mensaje, url } = getMensajeFlor();
+          const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(mensaje)}`;
+          window.open(fbUrl, '_blank');
+        }
     /* =============================================
        CONFIGURACIÓN FIREBASE
     ============================================= */
