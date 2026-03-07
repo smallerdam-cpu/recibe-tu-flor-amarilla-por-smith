@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌻 Recibe tu Flor Amarilla 🌻</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Firebase v9 compat via CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    /* =====================================================================
+       RESET & VARIABLES
+    ===================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --amarillo: #FFD700;
+      --amarillo2: #FFC107;
+      --amarillo3: #FFB300;
+      --dorado: #F0A500;
+      --verde: #4CAF50;
+      --verde2: #388E3C;
+      --blanco: #FFFFFF;
+      --rosa: #FF8FAB;
+      --texto: #4A3728;
+      --sombra: rgba(0,0,0,0.15);
+    }
+
+    html, body {
+      min-height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #FFF9C4 0%, #FFE082 35%, #FFF176 65%, #F9A825 100%);
+      background-attachment: fixed;
+      color: var(--texto);
+      overflow-x: hidden;
+    }
+
+    /* =====================================================================
+       PÉTALOS FLOTANTES (decoración de fondo)
+    ===================================================================== */
+    .petal {
+      position: fixed;
+      pointer-events: none;
+      font-size: 1.5rem;
+      opacity: 0.6;
+      animation: flotar linear infinite;
+      z-index: 0;
+    }
+
+    @keyframes flotar {
+      0%   { transform: translateY(-60px) rotate(0deg);   opacity: 0; }
+      10%  { opacity: 0.6; }
+      90%  { opacity: 0.4; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* =====================================================================
+       CONTENEDOR PRINCIPAL
+    ===================================================================== */
+    #app {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 16px 40px;
+    }
+
+    /* =====================================================================
+       PANTALLAS (screens)
+    ===================================================================== */
+    .pantalla {
+      display: none;
+      width: 100%;
+      max-width: 560px;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .pantalla.activa {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* =====================================================================
+       TARJETA CARD
+    ===================================================================== */
+    .card {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(8px);
+      border-radius: 24px;
+      padding: 36px 32px;
+      box-shadow: 0 8px 32px var(--sombra);
+      border: 2px solid rgba(255, 215, 0, 0.4);
+      margin-bottom: 24px;
+    }
+
+    /* =====================================================================
+       TIPOGRAFÍA
+    ===================================================================== */
+    .titulo-principal {
+      font-family: 'Dancing Script', cursive;
+      font-size: 2.8rem;
+      color: var(--dorado);
+      text-align: center;
+      text-shadow: 2px 2px 6px rgba(240, 165, 0, 0.35);
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .subtitulo {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      text-align: center;
+      color: var(--verde2);
+      font-weight: 500;
+      margin-bottom: 28px;
+    }
+
+    .pregunta-titulo {
+      font-family: 'Dancing Script', cursive;
+      font-size: 2rem;
+      color: var(--dorado);
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    /* =====================================================================
+       INPUTS
+    ===================================================================== */
+    .input-campo {
+      width: 100%;
+      padding: 14px 18px;
+      border: 2px solid var(--amarillo2);
+      border-radius: 14px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      background: rgba(255,255,255,0.9);
+      color: var(--texto);
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      margin-bottom: 20px;
+    }
+
+    .input-campo:focus {
+      border-color: var(--dorado);
+      box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.3);
+    }
+
+    .input-campo::placeholder {
+      color: #BDBDBD;
+    }
+
+    /* =====================================================================
+       BOTONES
+    ===================================================================== */
+    .btn-principal {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--amarillo), var(--dorado));
+      color: var(--texto);
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(255, 193, 7, 0.5);
+    }
+
+    .btn-principal:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 193, 7, 0.65);
+    }
+
+    .btn-principal:active {
+      transform: translateY(0);
+    }
+
+    /* Botones de opciones (4 opciones) */
+    .opciones-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .btn-opcion {
+      padding: 18px 12px;
+      background: linear-gradient(135deg, #FFF9C4, #FFE082);
+      border: 2px solid var(--amarillo2);
+      border-radius: 16px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--texto);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    .btn-opcion:hover {
+      background: linear-gradient(135deg, var(--amarillo), var(--dorado));
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 6px 18px rgba(255, 193, 7, 0.55);
+      border-color: var(--dorado);
+    }
+
+    .btn-opcion:active {
+      transform: scale(0.97);
+    }
+
+    .btn-opcion .opcion-emoji {
+      display: block;
+      font-size: 2rem;
+      margin-bottom: 6px;
+    }
+
+    /* =====================================================================
+       PANTALLA 6 – REGALO
+    ===================================================================== */
+
+    /* --- Loader de puntos --- */
+    .cargando {
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: 500;
+      color: var(--dorado);
+      padding: 20px 0;
+    }
+
+    .puntos span {
+      animation: parpadeo 1.2s infinite;
+      font-size: 1.6rem;
+    }
+    .puntos span:nth-child(2) { animation-delay: 0.2s; }
+    .puntos span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes parpadeo {
+      0%, 80%, 100% { opacity: 0; }
+      40%            { opacity: 1; }
+    }
+
+    /* --- Flor CSS --- */
+    .flor-contenedor {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      margin: 20px 0;
+      height: 260px;
+    }
+
+    /* Wrapper que se balancea */
+    .flor-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: florCrecer 1s ease-out both, balanceo 4s ease-in-out 1.1s infinite;
+      transform-origin: center bottom;
+    }
+
+    @keyframes florCrecer {
+      from { transform: scale(0) translateY(40px); opacity: 0; }
+      to   { transform: scale(1) translateY(0);    opacity: 1; }
+    }
+
+    @keyframes balanceo {
+      0%, 100% { transform: rotate(0deg);  }
+      25%       { transform: rotate(3deg);  }
+      75%       { transform: rotate(-3deg); }
+    }
+
+    /* Cabeza de la flor (contenedor de pétalos + centro) */
+    .cabeza-flor {
+      position: relative;
+      width: 160px;
+      height: 160px;
+    }
+
+    /* Pétalos de la flor */
+    .petalo-flor {
+      position: absolute;
+      width: 46px;
+      height: 64px;
+      background: radial-gradient(ellipse at 50% 30%, #FFEE58, #FFD700, #FFA000);
+      border-radius: 50% 50% 45% 45%;
+      /* base del pétalo al centro de .cabeza-flor (80px, 80px) */
+      top: 16px;   /* 80 - 64 = 16px  */
+      left: 57px;  /* 80 - 46/2 = 57px */
+      transform-origin: 23px 64px; /* centro horizontal del pétalo, su base */
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      animation: brillar 3s ease-in-out infinite;
+    }
+
+    @keyframes brillar {
+      0%, 100% { filter: brightness(1);    }
+      50%       { filter: brightness(1.2);  }
+    }
+
+    /* 8 pétalos distribuidos en círculo */
+    .petalo-flor:nth-child(1)  { transform: rotate(0deg);   }
+    .petalo-flor:nth-child(2)  { transform: rotate(45deg);  }
+    .petalo-flor:nth-child(3)  { transform: rotate(90deg);  }
+    .petalo-flor:nth-child(4)  { transform: rotate(135deg); }
+    .petalo-flor:nth-child(5)  { transform: rotate(180deg); }
+    .petalo-flor:nth-child(6)  { transform: rotate(225deg); }
+    .petalo-flor:nth-child(7)  { transform: rotate(270deg); }
+    .petalo-flor:nth-child(8)  { transform: rotate(315deg); }
+
+    /* Centro de la flor */
+    .centro-flor {
+      position: absolute;
+      width: 52px;
+      height: 52px;
+      background: radial-gradient(circle at 40% 40%, #A0522D, #5D2E0C);
+      border-radius: 50%;
+      top: 54px;   /* 80 - 26 = 54px */
+      left: 54px;  /* 80 - 26 = 54px */
+      box-shadow: 0 0 0 5px #FFD700, 0 0 0 9px rgba(255,215,0,0.35);
+      z-index: 2;
+      animation: pulsarCentro 2.5s ease-in-out infinite;
+    }
+
+    @keyframes pulsarCentro {
+      0%, 100% { box-shadow: 0 0 0 5px #FFD700, 0 0 0 9px  rgba(255,215,0,0.35); }
+      50%       { box-shadow: 0 0 0 7px #FFD700, 0 0 0 14px rgba(255,215,0,0.55); }
+    }
+
+    /* Tallo */
+    .tallo {
+      position: relative;
+      width: 12px;
+      height: 120px;
+      background: linear-gradient(to top, var(--verde2), var(--verde));
+      border-radius: 6px;
+    }
+
+    /* Hoja izquierda */
+    .hoja-izq {
+      position: absolute;
+      bottom: 55px;
+      left: -32px;
+      width: 38px;
+      height: 20px;
+      background: var(--verde);
+      border-radius: 0 80% 0 80%;
+      transform: rotate(-25deg);
+    }
+
+    /* Hoja derecha */
+    .hoja-der {
+      position: absolute;
+      bottom: 78px;
+      left: 10px;
+      width: 38px;
+      height: 20px;
+      background: var(--verde);
+      border-radius: 80% 0 80% 0;
+      transform: rotate(25deg);
+    }
+
+    /* --- Textos del regalo --- */
+    .regalo-nombre {
+      font-family: 'Dancing Script', cursive;
+      font-size: 2rem;
+      color: var(--dorado);
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .regalo-mensaje {
+      font-size: 1rem;
+      text-align: center;
+      color: var(--texto);
+      margin-bottom: 6px;
+    }
+
+    .regalo-firma {
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.4rem;
+      text-align: center;
+      color: var(--verde2);
+      margin-bottom: 24px;
+    }
+
+    /* =====================================================================
+       RANKING
+    ===================================================================== */
+    .ranking-card {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(8px);
+      border-radius: 24px;
+      padding: 28px 24px;
+      box-shadow: 0 8px 32px var(--sombra);
+      border: 2px solid rgba(255, 215, 0, 0.4);
+      width: 100%;
+      max-width: 560px;
+      margin-top: 8px;
+    }
+
+    .ranking-titulo {
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.7rem;
+      color: var(--dorado);
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .ranking-lista {
+      list-style: none;
+    }
+
+    .ranking-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #FFF9C4, #FFFDE7);
+      border: 1px solid rgba(255, 193, 7, 0.3);
+      animation: fadeIn 0.4s ease;
+    }
+
+    .ranking-num {
+      font-weight: 700;
+      color: var(--dorado);
+      font-size: 1.1rem;
+      min-width: 30px;
+    }
+
+    .ranking-nombre {
+      font-weight: 500;
+      flex: 1;
+      color: var(--texto);
+    }
+
+    .ranking-fecha {
+      font-size: 0.75rem;
+      color: #757575;
+    }
+
+    .ranking-vacio {
+      text-align: center;
+      color: #9E9E9E;
+      font-style: italic;
+      padding: 12px 0;
+      font-size: 0.9rem;
+    }
+
+    /* =====================================================================
+       BARRA DE PROGRESO
+    ===================================================================== */
+    .barra-progreso-contenedor {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+
+    .paso-indicador {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255, 193, 7, 0.3);
+      transition: background 0.3s;
+    }
+
+    .paso-indicador.activo {
+      background: var(--dorado);
+      box-shadow: 0 0 6px rgba(255, 193, 7, 0.7);
+    }
+
+    /* =====================================================================
+       RESPONSIVE
+    ===================================================================== */
+    @media (max-width: 480px) {
+      .titulo-principal { font-size: 2.1rem; }
+      .card { padding: 28px 20px; }
+      .opciones-grid { gap: 10px; }
+      .btn-opcion { padding: 14px 8px; font-size: 0.85rem; }
+      .btn-opcion .opcion-emoji { font-size: 1.6rem; }
+      .cabeza-flor { width: 130px; height: 130px; }
+      .petalo-flor { width: 38px; height: 52px; top: 13px; left: 46px; transform-origin: 19px 52px; }
+      .centro-flor { width: 42px; height: 42px; top: 44px; left: 44px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===================================================================
+       PÉTALOS FLOTANTES DE FONDO
+  =================================================================== -->
+  <div id="petalos-fondo"></div>
+
+  <!-- ===================================================================
+       CONTENEDOR PRINCIPAL
+  =================================================================== -->
+  <div id="app">
+
+    <!-- ==================== PANTALLA 1: INICIO ====================  -->
+    <div id="pantalla1" class="pantalla activa">
+      <div class="card">
+        <h1 class="titulo-principal">🌻 Recibe tu Flor Amarilla 🌻</h1>
+        <p class="subtitulo">21 de Marzo — Día de la Primavera</p>
+
+        <input
+          id="input-nombre"
+          class="input-campo"
+          type="text"
+          placeholder="✍️ Ingresa tu nombre aquí..."
+          maxlength="60"
+          autocomplete="off"
+        />
+
+        <button class="btn-principal" onclick="irAPantalla2()">
+          Siguiente ➡️
+        </button>
+      </div>
+
+      <!-- RANKING -->
+      <div class="ranking-card">
+        <h2 class="ranking-titulo">🏆 Ranking — Flores Entregadas</h2>
+        <ul id="ranking-lista" class="ranking-lista">
+          <li class="ranking-vacio">Aún no se han entregado flores 🌻</li>
+        </ul>
+      </div>
+    </div>
+    <!-- ==================== FIN PANTALLA 1 ====================  -->
+
+    <!-- ==================== PANTALLA 2: COLOR ====================  -->
+    <div id="pantalla2" class="pantalla">
+      <div class="card">
+        <div class="barra-progreso-contenedor">
+          <div class="paso-indicador activo"></div>
+          <div class="paso-indicador"></div>
+          <div class="paso-indicador"></div>
+          <div class="paso-indicador"></div>
+        </div>
+
+        <h2 class="pregunta-titulo">🎨 ¿Cuál es tu color favorito?</h2>
+
+        <div class="opciones-grid">
+          <button class="btn-opcion" onclick="seleccionarColor('Rosa')">
+            <span class="opcion-emoji">🌸</span> Rosa
+          </button>
+          <button class="btn-opcion" onclick="seleccionarColor('Azul')">
+            <span class="opcion-emoji">💙</span> Azul
+          </button>
+          <button class="btn-opcion" onclick="seleccionarColor('Amarillo')">
+            <span class="opcion-emoji">💛</span> Amarillo
+          </button>
+          <button class="btn-opcion" onclick="seleccionarColor('Morado')">
+            <span class="opcion-emoji">💜</span> Morado
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- ==================== FIN PANTALLA 2 ====================  -->
+
+    <!-- ==================== PANTALLA 3: MASCOTA ====================  -->
+    <div id="pantalla3" class="pantalla">
+      <div class="card">
+        <div class="barra-progreso-contenedor">
+          <div class="paso-indicador activo"></div>
+          <div class="paso-indicador activo"></div>
+          <div class="paso-indicador"></div>
+          <div class="paso-indicador"></div>
+        </div>
+
+        <h2 class="pregunta-titulo">🐾 ¿Qué mascota te gusta más?</h2>
+
+        <div class="opciones-grid">
+          <button class="btn-opcion" onclick="seleccionarMascota('Perrito')">
+            <span class="opcion-emoji">🐶</span> Perrito
+          </button>
+          <button class="btn-opcion" onclick="seleccionarMascota('Gatito')">
+            <span class="opcion-emoji">🐱</span> Gatito
+          </button>
+          <button class="btn-opcion" onclick="seleccionarMascota('Conejito')">
+            <span class="opcion-emoji">🐰</span> Conejito
+          </button>
+          <button class="btn-opcion" onclick="seleccionarMascota('Hamster')">
+            <span class="opcion-emoji">🐹</span> Hamster
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- ==================== FIN PANTALLA 3 ====================  -->
+
+    <!-- ==================== PANTALLA 4: FECHA ESPECIAL ====================  -->
+    <div id="pantalla4" class="pantalla">
+      <div class="card">
+        <div class="barra-progreso-contenedor">
+          <div class="paso-indicador activo"></div>
+          <div class="paso-indicador activo"></div>
+          <div class="paso-indicador activo"></div>
+          <div class="paso-indicador"></div>
+        </div>
+
+        <h2 class="pregunta-titulo">📅 ¿Cuál es tu fecha especial?</h2>
+
+        <input
+          id="input-fecha"
+          class="input-campo"
+          type="text"
+          placeholder="✍️ Escribe tu fecha o motivo especial..."
+          maxlength="100"
+          autocomplete="off"
+        />
+
+        <button class="btn-principal" onclick="irAPantalla5()">
+          Siguiente ➡️
+        </button>
+      </div>
+    </div>
+    <!-- ==================== FIN PANTALLA 4 ====================  -->
+
+    <!-- ==================== PANTALLA 5: MÚSICA ====================  -->
+    <div id="pantalla5" class="pantalla">
+      <div class="card">
+        <div class="barra-progreso-contenedor">
+          <div class="paso-indicador activo"></div>
+          <div class="paso-indicador activo"></div>
+          <div class="paso-indicador activo"></div>
+          <div class="paso-indicador activo"></div>
+        </div>
+
+        <h2 class="pregunta-titulo">🎵 ¿Qué música prefieres?</h2>
+
+        <div class="opciones-grid">
+          <button class="btn-opcion" onclick="seleccionarMusica('Pop')">
+            <span class="opcion-emoji">🎤</span> Pop
+          </button>
+          <button class="btn-opcion" onclick="seleccionarMusica('Reggaetón')">
+            <span class="opcion-emoji">🔥</span> Reggaetón
+          </button>
+          <button class="btn-opcion" onclick="seleccionarMusica('Rock')">
+            <span class="opcion-emoji">🎸</span> Rock
+          </button>
+          <button class="btn-opcion" onclick="seleccionarMusica('Romántica')">
+            <span class="opcion-emoji">💕</span> Romántica
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- ==================== FIN PANTALLA 5 ====================  -->
+
+    <!-- ==================== PANTALLA 6: REGALO ====================  -->
+    <div id="pantalla6" class="pantalla">
+      <div class="card">
+
+        <!-- Estado: cargando -->
+        <div id="estado-cargando" class="cargando">
+          Preparando tu regalo
+          <span class="puntos">
+            <span>.</span><span>.</span><span>.</span>
+          </span>
+        </div>
+
+        <!-- Estado: regalo visible (oculto hasta que cargue) -->
+        <div id="estado-regalo" style="display:none;">
+          <p id="regalo-nombre-texto" class="regalo-nombre"></p>
+
+          <!-- FLOR ANIMADA CSS -->
+          <div class="flor-contenedor">
+            <div class="flor-wrap">
+              <!-- Cabeza de la flor: pétalos + centro -->
+              <div class="cabeza-flor">
+                <div class="petalo-flor"></div>
+                <div class="petalo-flor"></div>
+                <div class="petalo-flor"></div>
+                <div class="petalo-flor"></div>
+                <div class="petalo-flor"></div>
+                <div class="petalo-flor"></div>
+                <div class="petalo-flor"></div>
+                <div class="petalo-flor"></div>
+                <div class="centro-flor"></div>
+              </div>
+              <!-- Tallo y hojas -->
+              <div class="tallo">
+                <div class="hoja-izq"></div>
+                <div class="hoja-der"></div>
+              </div>
+            </div>
+          </div>
+
+          <p class="regalo-mensaje">Feliz día de la primavera 🌸</p>
+          <p class="regalo-firma">Con cariño, de Smith 💛</p>
+
+          <button class="btn-principal" onclick="volverAlInicio()">
+            🏠 Volver al inicio
+          </button>
+        </div>
+
+      </div>
+    </div>
+    <!-- ==================== FIN PANTALLA 6 ====================  -->
+
+  </div><!-- /#app -->
+
+  <!-- ===================================================================
+       JAVASCRIPT
+  =================================================================== -->
+  <script>
+    // ==========================================================
+    // CONFIGURACIÓN DE FIREBASE
+    // ==========================================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyDDvR37fgFMTPZBIs3OEqL5qk00A7ejXXs",
+      authDomain: "mipaginaweb-14d2e.firebaseapp.com",
+      projectId: "mipaginaweb-14d2e",
+      storageBucket: "mipaginaweb-14d2e.firebasestorage.app",
+      messagingSenderId: "540722474978",
+      appId: "1:540722474978:web:9825b39baffcf7bb02d3bb",
+      measurementId: "G-XFXEXB982T"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // ==========================================================
+    // ESTADO DE LA APLICACIÓN
+    // ==========================================================
+    const estado = {
+      nombre: '',
+      colorFavorito: '',
+      mascota: '',
+      fechaEspecial: '',
+      musicaFavorita: ''
+    };
+
+    // ==========================================================
+    // UTILIDADES DE NAVEGACIÓN
+    // ==========================================================
+
+    /**
+     * Muestra una pantalla y oculta las demás.
+     * @param {string} idPantalla - ID del elemento de la pantalla a mostrar
+     */
+    function mostrarPantalla(idPantalla) {
+      document.querySelectorAll('.pantalla').forEach(p => {
+        p.classList.remove('activa');
+      });
+      const pantalla = document.getElementById(idPantalla);
+      pantalla.classList.add('activa');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ==========================================================
+    // LÓGICA DE CADA PANTALLA
+    // ==========================================================
+
+    /** Pantalla 1 → 2 */
+    function irAPantalla2() {
+      const nombre = document.getElementById('input-nombre').value.trim();
+      if (!nombre) {
+        alert('Por favor ingresa tu nombre 🌻');
+        return;
+      }
+      estado.nombre = nombre;
+      mostrarPantalla('pantalla2');
+    }
+
+    /** Pantalla 2: selección de color → Pantalla 3 */
+    function seleccionarColor(color) {
+      estado.colorFavorito = color;
+      mostrarPantalla('pantalla3');
+    }
+
+    /** Pantalla 3: selección de mascota → Pantalla 4 */
+    function seleccionarMascota(mascota) {
+      estado.mascota = mascota;
+      mostrarPantalla('pantalla4');
+    }
+
+    /** Pantalla 4 → 5 */
+    function irAPantalla5() {
+      const fecha = document.getElementById('input-fecha').value.trim();
+      estado.fechaEspecial = fecha;
+      mostrarPantalla('pantalla5');
+    }
+
+    /** Pantalla 5: selección de música → Pantalla 6 (regalo) */
+    function seleccionarMusica(musica) {
+      estado.musicaFavorita = musica;
+      mostrarPantalla('pantalla6');
+      mostrarRegalo();
+    }
+
+    /**
+     * Muestra la pantalla de carga, guarda en Firestore,
+     * y luego revela el regalo.
+     */
+    function mostrarRegalo() {
+      // Mostrar loader, ocultar regalo
+      document.getElementById('estado-cargando').style.display = 'block';
+      document.getElementById('estado-regalo').style.display = 'none';
+
+      // Guardar en Firestore
+      guardarEnFirestore();
+
+      // Esperar 2.5 segundos y mostrar el regalo
+      setTimeout(() => {
+        document.getElementById('estado-cargando').style.display = 'none';
+
+        const textoNombre = document.getElementById('regalo-nombre-texto');
+        textoNombre.textContent = `✨ ${estado.nombre}, aquí tienes tu flor amarilla ✨`;
+
+        const divRegalo = document.getElementById('estado-regalo');
+        divRegalo.style.display = 'block';
+        divRegalo.style.animation = 'fadeIn 0.6s ease';
+      }, 2500);
+    }
+
+    /**
+     * Guarda el nombre y la fecha/hora actual en Firestore
+     * en la colección "flores_entregadas".
+     * Solo guarda si el nombre es válido (1–60 caracteres alfanuméricos/espacios).
+     */
+    function guardarEnFirestore() {
+      const nombre = estado.nombre.trim();
+      // Validación básica: nombre no vacío y longitud razonable
+      if (!nombre || nombre.length > 60) return;
+
+      db.collection('flores_entregadas').add({
+        nombre: nombre,
+        fecha: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(err => {
+        // Silenciar errores de red (no afectan la experiencia del usuario)
+        console.warn('No se pudo guardar en Firestore:', err);
+      });
+    }
+
+    /** Volver al inicio (Pantalla 1) */
+    function volverAlInicio() {
+      // Limpiar estado
+      estado.nombre = '';
+      estado.colorFavorito = '';
+      estado.mascota = '';
+      estado.fechaEspecial = '';
+      estado.musicaFavorita = '';
+
+      // Limpiar inputs
+      document.getElementById('input-nombre').value = '';
+      document.getElementById('input-fecha').value = '';
+
+      mostrarPantalla('pantalla1');
+    }
+
+    // ==========================================================
+    // RANKING EN TIEMPO REAL (onSnapshot)
+    // ==========================================================
+
+    /**
+     * Escucha cambios en la colección "flores_entregadas"
+     * y actualiza el ranking en tiempo real.
+     */
+    db.collection('flores_entregadas')
+      .orderBy('fecha', 'desc')
+      .onSnapshot(snapshot => {
+        const lista = document.getElementById('ranking-lista');
+        lista.innerHTML = '';
+
+        if (snapshot.empty) {
+          lista.innerHTML = '<li class="ranking-vacio">Aún no se han entregado flores 🌻</li>';
+          return;
+        }
+
+        let numero = 1;
+        snapshot.forEach(doc => {
+          const datos = doc.data();
+          const nombre = datos.nombre || 'Desconocida';
+
+          // Formatear la fecha
+          let fechaTexto = '...';
+          if (datos.fecha) {
+            const fecha = datos.fecha.toDate();
+            fechaTexto = fecha.toLocaleString(navigator.language || 'es', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+          }
+
+          const li = document.createElement('li');
+          li.className = 'ranking-item';
+          li.innerHTML = `
+            <span class="ranking-num">${numero}🌻</span>
+            <span class="ranking-nombre">${escapeHTML(nombre)}</span>
+            <span class="ranking-fecha">${fechaTexto}</span>
+          `;
+          lista.appendChild(li);
+          numero++;
+        });
+      }, err => {
+        console.warn('Error al leer Firestore:', err);
+      });
+
+    // ==========================================================
+    // PÉTALOS FLOTANTES DE FONDO (decoración)
+    // ==========================================================
+    (function crearPetalos() {
+      const contenedor = document.getElementById('petalos-fondo');
+      const emojis = ['🌸', '🌼', '🌻', '✨', '💛'];
+      const cantidad = 18;
+
+      for (let i = 0; i < cantidad; i++) {
+        const petal = document.createElement('div');
+        petal.className = 'petal';
+        petal.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        petal.style.left = `${Math.random() * 100}vw`;
+        petal.style.animationDuration = `${6 + Math.random() * 8}s`;
+        petal.style.animationDelay = `${Math.random() * 10}s`;
+        petal.style.fontSize = `${1 + Math.random() * 1.2}rem`;
+        contenedor.appendChild(petal);
+      }
+    })();
+
+    // ==========================================================
+    // UTILIDAD: Escapar HTML para evitar XSS
+    // ==========================================================
+    function escapeHTML(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
