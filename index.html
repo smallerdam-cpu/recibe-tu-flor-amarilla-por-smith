@@ -16,6 +16,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
 
   <style>
+          @media (max-width: 600px) {
+            #contador-visitas {
+              left: 50%;
+              transform: translateX(-50%);
+              min-width: 140px;
+              font-size: 0.98rem;
+              padding: 8px 10px;
+            }
+          }
         /* =============================================
            PERFIL DEL CREADOR
         ============================================= */
@@ -547,8 +556,17 @@
 
   <!-- Contador de visitas -->
   <div id="contador-visitas" style="position:fixed; bottom:24px; left:24px; background:rgba(255,255,255,0.92); border-radius:14px; box-shadow:0 2px 12px rgba(255,193,7,0.13); padding:8px 18px; z-index:10; font-size:1.05rem; color:#b8860b; font-family:'Poppins',sans-serif;">
-    Visitantes: <span id="visitas-num">...</span>
-    <button onclick="sumarVisitaManual()" style="margin-left:10px; background:#ffd54f; border:none; border-radius:8px; padding:2px 10px; cursor:pointer; color:#6d4c41; font-size:0.95rem;">+1</button>
+    <span style="display:inline-block;width:13px;height:13px;background:#4caf50;border-radius:50%;margin-right:7px;vertical-align:middle;border:2px solid #fff;box-shadow:0 0 4px #388e3c;"></span>
+    <span style="min-width:110px;display:inline-block;white-space:nowrap;">En línea: <span id="enlinea-num">...</span></span>
+    @media (max-width: 600px) {
+      #contador-visitas {
+        left: 50%;
+        transform: translateX(-50%);
+        min-width: 140px;
+        font-size: 0.98rem;
+        padding: 8px 10px;
+      }
+    }
   </div>
 
   <!-- Perfil del creador -->
@@ -777,10 +795,6 @@
               });
             }
 
-            // Botón para sumar visita manualmente
-            function sumarVisitaManual() {
-              sumarVisita();
-            }
 
             // Sumar visita automáticamente al cargar la página
             window.addEventListener('DOMContentLoaded', function() {
@@ -905,41 +919,16 @@
             li.appendChild(spanNombre);
             li.appendChild(spanFecha);
             lista.appendChild(li);
-            contador++;
-          });
-        }, function(error) {
-          console.error('Error en ranking:', error);
-          const lista = document.getElementById('lista-ranking');
-          lista.innerHTML = '<li class="ranking-vacio">No se pudo cargar el ranking.</li>';
-        });
-    }
 
-    /**
-     * Escapa caracteres HTML especiales para prevenir XSS al insertar
-     * texto de usuario dentro de innerHTML.
-     * @param {string} texto - Texto a sanitizar.
-     * @returns {string} Texto con entidades HTML escapadas.
-     */
-    function escapeHtml(texto) {
-      const div = document.createElement('div');
-      div.appendChild(document.createTextNode(texto));
-      return div.innerHTML;
-    }
-
-    // Arrancar el ranking al cargar la página
-    iniciarRanking();
-
-    /* =============================================
-       NAVEGACIÓN ENTRE PANTALLAS
-    ============================================= */
-    function mostrarPantalla(id) {
-      document.querySelectorAll('.pantalla').forEach(function(p) {
-        p.classList.remove('activa');
-      });
-      const siguiente = document.getElementById(id);
-      siguiente.classList.add('activa');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+                // === CONTADOR DE USUARIOS EN LÍNEA SIMULADO SECUENCIAL ===
+                const secuenciaEnLinea = [5, 10, 8, 4, 11];
+                let idxEnLinea = 0;
+                function actualizarEnLinea() {
+                  document.getElementById('enlinea-num').textContent = secuenciaEnLinea[idxEnLinea];
+                  idxEnLinea = (idxEnLinea + 1) % secuenciaEnLinea.length;
+                }
+                setInterval(actualizarEnLinea, 3000);
+                window.addEventListener('DOMContentLoaded', actualizarEnLinea);
 
     /* =============================================
        PANTALLA 1 → PANTALLA 2
