@@ -550,9 +550,111 @@
         padding: 14px 8px;
       }
     }
+    /* Notificación de música */
+    .notif-musica {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 14px 20px 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 20;
+      box-shadow: 0 6px 28px rgba(0,0,0,0.12), 0 2px 8px rgba(255,193,7,0.2);
+      transform: translateX(120%);
+      opacity: 0;
+      transition: transform 0.5s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s ease;
+      max-width: 300px;
+    }
+    .notif-musica.visible {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    .notif-musica.minimizada {
+      padding: 5px;
+      max-width: 50px;
+      border-radius: 30%;
+      cursor: pointer;
+      gap: 0;
+    }
+    .notif-musica.minimizada .notif-info,
+    .notif-musica.minimizada .notif-barra {
+      display: none;
+    }
+    .notif-icono {
+      font-size: 2rem;
+      animation: girarDisco 3s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes girarDisco {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .notif-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .notif-titulo {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 0.92rem;
+      color: #5d4037;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .notif-artista {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.8rem;
+      color: #8d6e63;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .notif-barra {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #ffd700, #ff9800);
+      border-radius: 0 0 16px 16px;
+      animation: progreso 6s linear forwards;
+    }
+    @keyframes progreso {
+      from { width: 100%; }
+      to { width: 0%; }
+    }
+    @media (max-width: 480px) {
+      .notif-musica {
+        right: 12px;
+        top: 12px;
+        max-width: 260px;
+        padding: 10px 14px;
+      }
+    }
   </style>
 </head>
 <body>
+
+  <!-- Música de fondo -->
+  <audio id="musica-fondo" loop>
+    <source src="https://files.catbox.moe/whbtqm.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Notificación de canción -->
+  <div class="notif-musica" id="notif-musica" onclick="toggleNotif()">
+    <span class="notif-icono">💿</span>
+    <div class="notif-info">
+      <span class="notif-titulo">Golden Brown</span>
+      <span class="notif-artista">The Stranglers</span>
+    </div>
+    <div class="notif-barra" id="notif-barra"></div>
+  </div>
 
   <div id="contador-enlinea" style="position:fixed; bottom:24px; left:24px; background:rgba(255,255,255,0.92); border-radius:14px; box-shadow:0 2px 12px rgba(255,193,7,0.13); padding:8px 18px; z-index:10; font-size:1.05rem; color:#b8860b; font-family:'Poppins',sans-serif; min-width:120px;">
     <span style="display:inline-block;width:13px;height:13px;background:#4caf50;border-radius:50%;margin-right:7px;vertical-align:middle;border:2px solid #fff;box-shadow:0 0 4px #388e3c;"></span>
@@ -1074,6 +1176,56 @@
       actualizarEnLinea();
       setInterval(actualizarEnLinea, 6500);
     });
+  </script>
+  <script>
+    // === MÚSICA DE FONDO ===
+    var musicaFondo = document.getElementById('musica-fondo');
+    var notifMusica = document.getElementById('notif-musica');
+    var musicaSonando = false;
+    var notifMostrada = false;
+
+    var notifTimer = null;
+
+    function mostrarNotifMusica() {
+      if (notifMostrada) return;
+      notifMostrada = true;
+      notifMusica.classList.remove('minimizada');
+      notifMusica.classList.add('visible');
+      notifTimer = setTimeout(function() {
+        notifMusica.classList.add('minimizada');
+      }, 6000);
+    }
+
+    function toggleNotif() {
+      if (notifMusica.classList.contains('minimizada')) {
+        notifMusica.classList.remove('minimizada');
+        var barra = document.getElementById('notif-barra');
+        barra.style.animation = 'none';
+        void barra.offsetWidth;
+        barra.style.animation = 'progreso 6s linear forwards';
+        clearTimeout(notifTimer);
+        notifTimer = setTimeout(function() {
+          notifMusica.classList.add('minimizada');
+        }, 6000);
+      } else {
+        notifMusica.classList.add('minimizada');
+        clearTimeout(notifTimer);
+      }
+    }
+
+    // Reproducir automáticamente al primer clic/toque
+    function iniciarMusicaAuto() {
+      if (!musicaSonando) {
+        musicaFondo.play().then(function() {
+          musicaSonando = true;
+          mostrarNotifMusica();
+        }).catch(function() {});
+      }
+      document.removeEventListener('click', iniciarMusicaAuto);
+      document.removeEventListener('touchstart', iniciarMusicaAuto);
+    }
+    document.addEventListener('click', iniciarMusicaAuto);
+    document.addEventListener('touchstart', iniciarMusicaAuto);
   </script>
   </body>
 </html>
