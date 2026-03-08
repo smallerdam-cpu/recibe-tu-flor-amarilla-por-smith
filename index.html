@@ -552,9 +552,7 @@
     }
   </style>
 </head>
-
-   <!-- Contador de personas en línea (simulado) -->
-</body>
+<body>
 
   <div id="contador-enlinea" style="position:fixed; bottom:24px; left:24px; background:rgba(255,255,255,0.92); border-radius:14px; box-shadow:0 2px 12px rgba(255,193,7,0.13); padding:8px 18px; z-index:10; font-size:1.05rem; color:#b8860b; font-family:'Poppins',sans-serif; min-width:120px;">
     <span style="display:inline-block;width:13px;height:13px;background:#4caf50;border-radius:50%;margin-right:7px;vertical-align:middle;border:2px solid #fff;box-shadow:0 0 4px #388e3c;"></span>
@@ -588,19 +586,19 @@
           id="input-nombre"
           class="input-bonito"
           type="text"
-          placeholder="✍️ Ingresa tu nombre..."
+          placeholder="✍️ Escribe tu nombre..."
           maxlength="40"
           autocomplete="off"
         />
-        <button class="btn-principal" onclick="irAPregunta1()">Siguiente ➡️</button>
+        <button class="btn-principal" onclick="irAPregunta1()">Recibir mi flor 🌻</button>
       </div>
 
-      <!-- Ranking en tiempo real -->
-      <div id="seccion-ranking">
+      <!-- Ranking -->
+      <div id="seccion-ranking" style="margin-top:36px;">
         <div class="ranking-card">
-          <h3>🏆 Ranking — Flores Entregadas</h3>
+          <h3>🌻 Flores entregadas</h3>
           <ul id="lista-ranking">
-            <li class="ranking-vacio">Cargando ranking...</li>
+            <li class="ranking-vacio">Cargando...</li>
           </ul>
         </div>
       </div>
@@ -792,6 +790,7 @@
             window.addEventListener('DOMContentLoaded', function() {
               sumarVisita();
               actualizarContadorVisitas();
+              iniciarRanking();
             });
         // Función para obtener el mensaje personalizado y el enlace
         function getMensajeFlor() {
@@ -912,7 +911,22 @@
             li.appendChild(spanFecha);
             lista.appendChild(li);
 
+            contador++;
+          });
+        });
+    }
 
+
+    /* =============================================
+       FUNCIÓN PARA MOSTRAR PANTALLAS
+    ============================================= */
+    function mostrarPantalla(id) {
+      document.querySelectorAll('.pantalla').forEach(function(p) {
+        p.classList.remove('activa');
+      });
+      var pantalla = document.getElementById(id);
+      if (pantalla) pantalla.classList.add('activa');
+    }
 
     /* =============================================
        PANTALLA 1 → PANTALLA 2
@@ -1061,6 +1075,5 @@
       setInterval(actualizarEnLinea, 6500);
     });
   </script>
-</body>
-</body>
+  </body>
 </html>
