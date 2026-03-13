@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎮 Tetris Neon Studio</title>
+  <style>
+    /* =============================================
+       RESET & BASE
+    ============================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0a0f;
+      --panel:     #12121e;
+      --card:      #1a1a2e;
+      --border:    #2a2a4a;
+      --neon-cyan: #00f5ff;
+      --neon-pink: #ff006e;
+      --neon-green:#39ff14;
+      --neon-purple:#bf00ff;
+      --neon-orange:#ff6600;
+      --neon-gold:  #ffd700;
+      --neon-blue:  #007bff;
+      --text:       #e0e0ff;
+      --text-dim:   #888aaa;
+      --radius:     12px;
+      --tab-h:      56px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* =============================================
+       HEADER
+    ============================================= */
+    header {
+      background: linear-gradient(135deg, #0d0d1a 0%, #12122a 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 24px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 24px rgba(0,245,255,.08);
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .logo {
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .title-block h1 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: .04em;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple), var(--neon-pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .title-block p {
+      font-size: .8rem;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    /* =============================================
+       TABS
+    ============================================= */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tab-btn {
+      flex-shrink: 0;
+      height: var(--tab-h);
+      padding: 0 22px;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--text-dim);
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover { color: var(--text); }
+
+    .tab-btn.active {
+      color: var(--neon-cyan);
+      border-bottom-color: var(--neon-cyan);
+      text-shadow: 0 0 8px var(--neon-cyan);
+    }
+
+    /* =============================================
+       MAIN LAYOUT
+    ============================================= */
+    main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+    .tab-panel { display: none; animation: fadeIn .3s ease; }
+    .tab-panel.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* =============================================
+       PANEL GRID (sidebar + preview)
+    ============================================= */
+    .panel-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .panel-grid { grid-template-columns: 1fr; }
+    }
+
+    /* =============================================
+       CARDS & SECTIONS
+    ============================================= */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+
+    .card-title {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--neon-cyan);
+      margin-bottom: 14px;
+    }
+
+    /* =============================================
+       CONTROLS
+    ============================================= */
+    .ctrl-group { margin-bottom: 14px; }
+
+    .ctrl-label {
+      display: block;
+      font-size: .78rem;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+
+    .ctrl-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    select, input[type="text"], input[type="range"], input[type="color"] {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: .85rem;
+      padding: 8px 10px;
+      width: 100%;
+      outline: none;
+      transition: border-color .2s;
+    }
+    select:focus, input[type="text"]:focus { border-color: var(--neon-cyan); }
+
+    input[type="range"] {
+      padding: 4px 0;
+      accent-color: var(--neon-cyan);
+    }
+
+    input[type="color"] {
+      padding: 2px 4px;
+      height: 36px;
+      width: 48px;
+      cursor: pointer;
+    }
+
+    .range-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .range-row input[type="range"] { flex: 1; }
+    .range-val {
+      font-size: .78rem;
+      color: var(--neon-cyan);
+      min-width: 32px;
+      text-align: right;
+    }
+
+    /* =============================================
+       COLOR CHIPS
+    ============================================= */
+    .color-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform .15s, border-color .15s;
+    }
+    .chip:hover { transform: scale(1.2); }
+    .chip.selected { border-color: #fff; transform: scale(1.15); }
+
+    /* =============================================
+       STYLE CHIPS
+    ============================================= */
+    .style-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .style-chip {
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text-dim);
+      font-size: .75rem;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .style-chip:hover { border-color: var(--neon-cyan); color: var(--text); }
+    .style-chip.selected {
+      background: rgba(0,245,255,.12);
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+    }
+
+    /* =============================================
+       ICON GRID
+    ============================================= */
+    .icon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+      max-height: 340px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .icon-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 4px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .icon-item:hover { border-color: var(--neon-cyan); background: rgba(0,245,255,.06); }
+    .icon-item.selected { border-color: var(--neon-cyan); background: rgba(0,245,255,.12); }
+
+    .icon-item svg { display: block; }
+    .icon-item span {
+      font-size: .6rem;
+      color: var(--text-dim);
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+    }
+
+    /* =============================================
+       PREVIEW BOX
+    ============================================= */
+    .preview-box {
+      min-height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview-box canvas,
+    .preview-box svg {
+      max-width: 100%;
+      max-height: 400px;
+    }
+
+    .preview-bg-dots {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+    }
+
+    /* =============================================
+       ACTION BUTTONS
+    ============================================= */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: 1px solid;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .btn-primary {
+      background: rgba(0,245,255,.12);
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+    }
+    .btn-primary:hover {
+      background: rgba(0,245,255,.22);
+      box-shadow: 0 0 12px rgba(0,245,255,.3);
+    }
+
+    .btn-secondary {
+      background: rgba(191,0,255,.1);
+      border-color: var(--neon-purple);
+      color: var(--neon-purple);
+    }
+    .btn-secondary:hover {
+      background: rgba(191,0,255,.2);
+      box-shadow: 0 0 12px rgba(191,0,255,.3);
+    }
+
+    .btn-danger {
+      background: rgba(255,0,110,.1);
+      border-color: var(--neon-pink);
+      color: var(--neon-pink);
+    }
+    .btn-danger:hover {
+      background: rgba(255,0,110,.2);
+      box-shadow: 0 0 12px rgba(255,0,110,.3);
+    }
+
+    .btn-success {
+      background: rgba(57,255,20,.1);
+      border-color: var(--neon-green);
+      color: var(--neon-green);
+    }
+    .btn-success:hover {
+      background: rgba(57,255,20,.2);
+      box-shadow: 0 0 12px rgba(57,255,20,.3);
+    }
+
+    .actions-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    /* =============================================
+       BUTTON PRESETS GRID
+    ============================================= */
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .preset-item {
+      padding: 10px 8px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      cursor: pointer;
+      text-align: center;
+      font-size: .75rem;
+      color: var(--text-dim);
+      transition: all .15s;
+    }
+    .preset-item:hover { border-color: var(--neon-purple); color: var(--text); }
+    .preset-item.selected { border-color: var(--neon-purple); background: rgba(191,0,255,.08); }
+
+    .preset-label { margin-top: 8px; }
+
+    /* =============================================
+       CODE BOX
+    ============================================= */
+    .code-box {
+      background: #0d0d0d;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+      font-size: .78rem;
+      color: #a0f0b0;
+      white-space: pre-wrap;
+      overflow-x: auto;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 12px;
+      scrollbar-width: thin;
+    }
+
+    /* =============================================
+       TOAST
+    ============================================= */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--card);
+      border: 1px solid var(--neon-green);
+      color: var(--neon-green);
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: .85rem;
+      font-weight: 600;
+      z-index: 9999;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all .3s ease;
+      pointer-events: none;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+
+    /* =============================================
+       SECTION DIVIDER
+    ============================================= */
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 16px 0;
+    }
+
+    /* =============================================
+       SCROLLBAR
+    ============================================= */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* =============================================
+       ABOUT TAB
+    ============================================= */
+    .about-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .feature-card .icon { font-size: 2.4rem; margin-bottom: 12px; }
+    .feature-card h3 { font-size: .95rem; margin-bottom: 6px; }
+    .feature-card p { font-size: .8rem; color: var(--text-dim); line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+<!-- =============================================
+     HEADER
+============================================= -->
+<header>
+  <div class="header-top">
+    <div class="logo">🎮</div>
+    <div class="title-block">
+      <h1>Tetris Neon Studio</h1>
+      <p>Generador integrado de iconos &amp; botones · Todo en un solo archivo</p>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button class="tab-btn active" data-tab="icons" role="tab">🎯 Iconos</button>
+    <button class="tab-btn"        data-tab="buttons" role="tab">🔘 Botones</button>
+    <button class="tab-btn"        data-tab="about" role="tab">ℹ️ Acerca de</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ===== TAB: ICONS ===== -->
+  <div id="tab-icons" class="tab-panel active">
+    <div class="panel-grid">
+
+      <!-- Controls -->
+      <aside>
+        <!-- Icon picker -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">🎯 Elige un icono</div>
+          <div class="ctrl-group">
+            <label class="ctrl-label">Categoría</label>
+            <select id="icon-category" onchange="filterIcons()">
+              <option value="all">Todos</option>
+              <option value="tech">Tech &amp; Dev</option>
+              <option value="ui">UI &amp; Design</option>
+              <option value="nature">Naturaleza</option>
+              <option value="social">Social</option>
+              <option value="game">Gaming</option>
+              <option value="misc">Misc</option>
+            </select>
+          </div>
+          <div id="icon-grid" class="icon-grid"></div>
+        </div>
+
+        <!-- Customization -->
+        <div class="card">
+          <div class="card-title">⚙️ Personalización</div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Estilo visual</label>
+            <div class="style-chips" id="icon-style-chips">
+              <span class="style-chip selected" data-style="neon">Neon</span>
+              <span class="style-chip" data-style="gradient">Gradient</span>
+              <span class="style-chip" data-style="glass">Glass</span>
+              <span class="style-chip" data-style="pixel">Pixel</span>
+              <span class="style-chip" data-style="cyber">Cyber</span>
+              <span class="style-chip" data-style="retro">Retro</span>
+              <span class="style-chip" data-style="fire">Fire</span>
+              <span class="style-chip" data-style="ice">Ice</span>
+              <span class="style-chip" data-style="gold">Gold</span>
+              <span class="style-chip" data-style="matrix">Matrix</span>
+            </div>
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Color principal</label>
+            <div class="color-chips" id="icon-color-chips"></div>
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Color secundario</label>
+            <div class="color-chips" id="icon-color2-chips"></div>
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Fondo del icono</label>
+            <div class="color-chips" id="icon-bg-chips"></div>
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Tamaño (px)</label>
+            <div class="range-row">
+              <input type="range" id="icon-size" min="32" max="256" value="96" oninput="updateIconSizeLabel(this.value); renderIcon()">
+              <span class="range-val" id="icon-size-val">96</span>
+            </div>
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Grosor de trazo</label>
+            <div class="range-row">
+              <input type="range" id="icon-stroke" min="1" max="8" value="2" step="0.5" oninput="updateIconStrokeLabel(this.value); renderIcon()">
+              <span class="range-val" id="icon-stroke-val">2</span>
+            </div>
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Radio de esquinas (px)</label>
+            <div class="range-row">
+              <input type="range" id="icon-radius" min="0" max="48" value="12" oninput="updateIconRadiusLabel(this.value); renderIcon()">
+              <span class="range-val" id="icon-radius-val">12</span>
+            </div>
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Intensidad glow</label>
+            <div class="range-row">
+              <input type="range" id="icon-glow" min="0" max="40" value="10" oninput="updateIconGlowLabel(this.value); renderIcon()">
+              <span class="range-val" id="icon-glow-val">10</span>
+            </div>
+          </div>
+
+          <hr class="section-divider">
+          <div class="actions-row">
+            <button class="btn btn-primary" onclick="downloadIcon()">⬇ Descargar PNG</button>
+            <button class="btn btn-secondary" onclick="downloadAllIcons()">📦 Descargar todos</button>
+            <button class="btn btn-success" onclick="copySvgCode()">📋 Copiar SVG</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Preview -->
+      <section>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">👁 Vista previa del icono</div>
+          <div class="preview-box" id="icon-preview">
+            <div class="preview-bg-dots"></div>
+            <canvas id="icon-canvas" width="256" height="256" style="position:relative;z-index:1"></canvas>
+          </div>
+          <div id="icon-info" style="margin-top:10px;font-size:.78rem;color:var(--text-dim);text-align:center"></div>
+        </div>
+
+        <!-- Preview de todos los iconos -->
+        <div class="card">
+          <div class="card-title">🗂 Galería rápida (estilo actual)</div>
+          <div id="icon-gallery" style="display:flex;flex-wrap:wrap;gap:10px;padding:4px;max-height:320px;overflow-y:auto;scrollbar-width:thin"></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ===== TAB: BUTTONS ===== -->
+  <div id="tab-buttons" class="tab-panel">
+    <div class="panel-grid">
+
+      <!-- Controls -->
+      <aside>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">🔘 Presets de botones</div>
+          <div id="btn-preset-grid" class="preset-grid"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">⚙️ Personalización</div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Texto del botón</label>
+            <input type="text" id="btn-text" value="Click me!" oninput="renderButton()">
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Estilo</label>
+            <div class="style-chips" id="btn-style-chips">
+              <span class="style-chip selected" data-style="neon">Neon</span>
+              <span class="style-chip" data-style="gradient">Gradient</span>
+              <span class="style-chip" data-style="glass">Glass</span>
+              <span class="style-chip" data-style="pixel">Pixel</span>
+              <span class="style-chip" data-style="cyber">Cyber</span>
+              <span class="style-chip" data-style="retro">Retro</span>
+              <span class="style-chip" data-style="fire">Fire</span>
+              <span class="style-chip" data-style="ice">Ice</span>
+              <span class="style-chip" data-style="gold">Gold</span>
+              <span class="style-chip" data-style="matrix">Matrix</span>
+              <span class="style-chip" data-style="outline">Outline</span>
+              <span class="style-chip" data-style="3d">3D</span>
+            </div>
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Color primario</label>
+            <div class="color-chips" id="btn-color-chips"></div>
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Color secundario</label>
+            <div class="color-chips" id="btn-color2-chips"></div>
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Ancho (px)</label>
+            <div class="range-row">
+              <input type="range" id="btn-width" min="80" max="400" value="180" oninput="updateBtnWidthLabel(this.value); renderButton()">
+              <span class="range-val" id="btn-width-val">180</span>
+            </div>
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Alto (px)</label>
+            <div class="range-row">
+              <input type="range" id="btn-height" min="30" max="120" value="48" oninput="updateBtnHeightLabel(this.value); renderButton()">
+              <span class="range-val" id="btn-height-val">48</span>
+            </div>
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Radio de borde (px)</label>
+            <div class="range-row">
+              <input type="range" id="btn-bradius" min="0" max="60" value="8" oninput="updateBtnBRadiusLabel(this.value); renderButton()">
+              <span class="range-val" id="btn-bradius-val">8</span>
+            </div>
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Tamaño de fuente (px)</label>
+            <div class="range-row">
+              <input type="range" id="btn-fontsize" min="10" max="36" value="16" oninput="updateBtnFontsizeLabel(this.value); renderButton()">
+              <span class="range-val" id="btn-fontsize-val">16</span>
+            </div>
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Glow (px)</label>
+            <div class="range-row">
+              <input type="range" id="btn-glow" min="0" max="40" value="12" oninput="updateBtnGlowLabel(this.value); renderButton()">
+              <span class="range-val" id="btn-glow-val">12</span>
+            </div>
+          </div>
+
+          <hr class="section-divider">
+          <div class="actions-row">
+            <button class="btn btn-primary" onclick="downloadButton()">⬇ Descargar PNG</button>
+            <button class="btn btn-success" onclick="copyCss()">📋 Copiar CSS</button>
+            <button class="btn btn-secondary" onclick="downloadAllButtons()">📦 Todos los presets</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Preview -->
+      <section>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">👁 Vista previa del botón</div>
+          <div class="preview-box" id="btn-preview" style="min-height:180px">
+            <div class="preview-bg-dots"></div>
+            <canvas id="btn-canvas" style="position:relative;z-index:1"></canvas>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">💻 Código CSS generado</div>
+          <pre id="btn-css-code" class="code-box"></pre>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🗂 Galería de presets</div>
+          <div id="btn-gallery" style="display:flex;flex-wrap:wrap;gap:12px;padding:4px;max-height:320px;overflow-y:auto;scrollbar-width:thin"></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ===== TAB: ABOUT ===== -->
+  <div id="tab-about" class="tab-panel">
+    <div style="text-align:center;padding:32px 0 24px">
+      <div style="font-size:3rem;margin-bottom:12px">🎮</div>
+      <h2 style="font-size:1.8rem;font-weight:800;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-purple),var(--neon-pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Tetris Neon Studio</h2>
+      <p style="color:var(--text-dim);margin-top:8px;font-size:.9rem">Generador de activos visuales · 100% offline · Sin dependencias externas</p>
+    </div>
+
+    <div class="about-grid">
+      <div class="feature-card">
+        <div class="icon">🎯</div>
+        <h3>47 Iconos SVG</h3>
+        <p>Iconos vectoriales organizados por categorías, completamente personalizables con colores, estilos y efectos neon.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🔘</div>
+        <h3>20 Presets de Botones</h3>
+        <p>Botones CSS con estilos neon, gradient, glass, pixel, cyber, retro, fire, ice, gold y matrix. Copia el CSS listo para usar.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">⬇️</div>
+        <h3>Descargas PNG</h3>
+        <p>Descarga iconos y botones como imágenes PNG individuales o en lote. Listos para usar en cualquier proyecto.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🎨</div>
+        <h3>10 Estilos Visuales</h3>
+        <p>Neon · Gradient · Glass · Pixel · Cyber · Retro · Fire · Ice · Gold · Matrix. Cada estilo con su propia paleta y efectos.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">⚡</div>
+        <h3>Tiempo Real</h3>
+        <p>Preview inmediato de todos los cambios. Ajusta color, tamaño, glow y estilo con retroalimentación instantánea.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📱</div>
+        <h3>Responsive</h3>
+        <p>Funciona perfectamente en desktop, tablet y móvil. Diseño adaptable con layout automático.</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// =============================================
+// CONSTANTS & DATA
+// =============================================
+
+const COLORS = [
+  { name:'cyan',   hex:'#00f5ff' },
+  { name:'pink',   hex:'#ff006e' },
+  { name:'green',  hex:'#39ff14' },
+  { name:'purple', hex:'#bf00ff' },
+  { name:'orange', hex:'#ff6600' },
+  { name:'gold',   hex:'#ffd700' },
+  { name:'blue',   hex:'#007bff' },
+  { name:'red',    hex:'#ff2244' },
+  { name:'white',  hex:'#ffffff' },
+  { name:'teal',   hex:'#00ffaa' },
+  { name:'yellow', hex:'#ffff00' },
+  { name:'lime',   hex:'#ccff00' },
+];
+
+const BG_COLORS = [
+  { name:'transparent', hex:'transparent' },
+  { name:'black',  hex:'#000000' },
+  { name:'dark',   hex:'#0a0a1a' },
+  { name:'navy',   hex:'#0d0d2e' },
+  { name:'gray',   hex:'#1a1a2e' },
+  { name:'white',  hex:'#ffffff' },
+];
+
+// 40+ icons
+const ICONS = [
+  // Tech & Dev
+  { id:'code',       cat:'tech', name:'Código',       path:'M 8 16 L 4 12 L 8 8 M 16 8 L 20 12 L 16 16 M 14 6 L 10 18' },
+  { id:'terminal',   cat:'tech', name:'Terminal',      path:'M 4 6 h16 v12 H4 z M 7 10 l 3 3 -3 3 M 12 16 h5' },
+  { id:'bug',        cat:'tech', name:'Bug',           path:'M 12 8 a4 4 0 0 1 4 4 v4 a4 4 0 0 1-8 0 v-4 a4 4 0 0 1 4-4z M 8 10 H5 M 19 10 H16 M 8 14 H5 M 19 14 H16 M 10 8 l-2-2 M 14 8 l2-2' },
+  { id:'cpu',        cat:'tech', name:'CPU',           path:'M 7 7 h10 v10 H7 z M 5 9 H7 M 5 12 H7 M 5 15 H7 M 17 9 h2 M 17 12 h2 M 17 15 h2 M 9 5 V7 M 12 5 V7 M 15 5 V7 M 9 17 v2 M 12 17 v2 M 15 17 v2' },
+  { id:'database',   cat:'tech', name:'Base de datos', path:'M 12 6 c5 0 8 1.3 8 3 s-3 3-8 3-8-1.3-8-3 3-3 8-3z M 4 9 c0 1.7 3 3 8 3s8-1.3 8-3 M 4 12 c0 1.7 3 3 8 3s8-1.3 8-3 M 4 15 c0 1.7 3 3 8 3s8-1.3 8-3v-3' },
+  { id:'wifi',       cat:'tech', name:'WiFi',          path:'M 12 18 l1-1-1-1-1 1z M 8 15 a5.7 5.7 0 0 1 8 0 M 5 12 a9.5 9.5 0 0 1 14 0 M 2 9 a13.5 13.5 0 0 1 20 0' },
+  { id:'bluetooth',  cat:'tech', name:'Bluetooth',     path:'M 7 7 l10 8-5 4V5l5 4L7 17' },
+  { id:'chip',       cat:'tech', name:'Chip',          path:'M9 9h6v6H9z M7 9H5M7 12H5M7 15H5M17 9h2M17 12h2M17 15h2M9 7V5M12 7V5M15 7V5M9 17v2M12 17v2M15 17v2' },
+
+  // UI & Design
+  { id:'star',       cat:'ui',   name:'Estrella',      path:'M 12 2 l3.09 6.26 L22 9.27 l-5 4.87 1.18 6.88 L12 17.77 l-6.18 3.25 L7 14.14 2 9.27 l6.91-1.01 L12 2z' },
+  { id:'heart',      cat:'ui',   name:'Corazón',       path:'M 20.84 4.61 a5.5 5.5 0 0 0-7.78 0 L12 5.67l-1.06-1.06 a5.5 5.5 0 0 0-7.78 7.78 l1.06 1.06 L12 21.23 l7.78-7.78 1.06-1.06 a5.5 5.5 0 0 0 0-7.78z' },
+  { id:'bell',       cat:'ui',   name:'Campana',       path:'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0' },
+  { id:'bookmark',   cat:'ui',   name:'Marcador',      path:'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z' },
+  { id:'eye',        cat:'ui',   name:'Ojo',           path:'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z' },
+  { id:'search',     cat:'ui',   name:'Buscar',        path:'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14z M21 21l-4.35-4.35' },
+  { id:'settings',   cat:'ui',   name:'Config',        path:'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z' },
+  { id:'lock',       cat:'ui',   name:'Candado',       path:'M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z M7 11V7a5 5 0 0 1 10 0v4' },
+  { id:'user',       cat:'ui',   name:'Usuario',       path:'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z' },
+
+  // Nature
+  { id:'sun',        cat:'nature', name:'Sol',          path:'M12 3v1m0 16v1M4.22 4.22l.71.71m12.02 12.02.71.71M1 12h2m18 0h2M4.22 19.78l.71-.71M18.36 5.64l.71-.71 M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z' },
+  { id:'moon',       cat:'nature', name:'Luna',         path:'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z' },
+  { id:'cloud',      cat:'nature', name:'Nube',         path:'M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z' },
+  { id:'rain',       cat:'nature', name:'Lluvia',       path:'M16 13v8M8 13v8M12 15v8M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25' },
+  { id:'snow',       cat:'nature', name:'Nieve',        path:'M12 2v20M4.93 4.93l14.14 14.14M2 12h20M4.93 19.07 19.07 4.93' },
+  { id:'leaf',       cat:'nature', name:'Hoja',         path:'M17 8C8 10 5.9 16.17 3.82 22L5.71 22c.89-1.86 2.79-5.5 5.79-7.5C7.5 19 6.5 21.5 6 22h2C11.86 15.9 15.69 10.55 17 8z' },
+  { id:'fire',       cat:'nature', name:'Fuego',        path:'M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z' },
+  { id:'water',      cat:'nature', name:'Agua',         path:'M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z' },
+  { id:'mountain',   cat:'nature', name:'Montaña',      path:'M3 20L12 4l9 16H3z M7.5 14l4.5-7 4.5 7' },
+
+  // Social
+  { id:'share',      cat:'social', name:'Compartir',   path:'M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8 M16 6l-4-4-4 4 M12 2v13' },
+  { id:'thumbsup',   cat:'social', name:'Me gusta',    path:'M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3' },
+  { id:'chat',       cat:'social', name:'Chat',        path:'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' },
+  { id:'mail',       cat:'social', name:'Email',       path:'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6' },
+  { id:'phone',      cat:'social', name:'Teléfono',    path:'M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.12 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z' },
+  { id:'link',       cat:'social', name:'Enlace',      path:'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71 M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71' },
+
+  // Gaming
+  { id:'gamepad',    cat:'game', name:'Gamepad',       path:'M6 11h4 M8 9v4 M15 10h.01 M18 10h.01 M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.153A4 4 0 0 0 2 12c0 .921.3 1.741.8 2.5.3.45.3.95.1 1.5l-.3.6c-.3.6-.1 1.3.5 1.5.5.2 1 0 1.3-.4l1.3-1.6a5.001 5.001 0 0 0 3.3 1.4h2c1.3 0 2.5-.5 3.3-1.4l1.3 1.6c.3.4.8.6 1.3.4.6-.2.8-.9.5-1.5l-.3-.6c-.2-.5-.2-1 .1-1.5.5-.759.8-1.579.8-2.5a4 4 0 0 0-.675-2.257c-.007-.052-.011-.101-.017-.153A4 4 0 0 0 17.32 5z' },
+  { id:'trophy',     cat:'game', name:'Trofeo',        path:'M6 9H4.5a2.5 2.5 0 0 1 0-5H6 M18 9h1.5a2.5 2.5 0 0 0 0-5H18 M4 22h16 M10 14.66V17a4 4 0 0 1-4 4h8a4 4 0 0 1-4-4v-2.34 M18 2H6v7a6 6 0 0 0 12 0V2z' },
+  { id:'target',     cat:'game', name:'Objetivo',      path:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z' },
+  { id:'sword',      cat:'game', name:'Espada',        path:'M14.5 17.5L3 6V3h3l11.5 11.5M13 19l2-2M16 22l4-4-1-4-4 1-4 4 1 1 2-2 1 1-2 2z' },
+  { id:'shield',     cat:'game', name:'Escudo',        path:'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' },
+  { id:'dice',       cat:'game', name:'Dado',          path:'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.27 6.96L12 12.01l8.73-5.05 M12 22.08V12' },
+  { id:'joystick',   cat:'game', name:'Joystick',      path:'M21 17a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2z M12 15v-3m0 0a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M10 9h4' },
+
+  // Misc
+  { id:'lightning',  cat:'misc', name:'Rayo',          path:'M13 2L3 14h9l-1 8 10-12h-9l1-8z' },
+  { id:'diamond',    cat:'misc', name:'Diamante',      path:'M2.7 10.3l8.78-8.78a.75.75 0 0 1 1.06 0L21.3 10.3a.75.75 0 0 1 0 1.06l-8.78 8.78a.75.75 0 0 1-1.06 0L2.7 11.36a.75.75 0 0 1 0-1.06z' },
+  { id:'music',      cat:'misc', name:'Música',        path:'M9 18V5l12-2v13 M9 9l12-2 M9 18a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M21 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6z' },
+  { id:'camera',     cat:'misc', name:'Cámara',        path:'M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z' },
+  { id:'rocket',     cat:'misc', name:'Cohete',        path:'M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0 M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5' },
+  { id:'map',        cat:'misc', name:'Mapa',          path:'M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z M8 2v16 M16 6v16' },
+  { id:'clock',      cat:'misc', name:'Reloj',         path:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 6v6l4 2' },
+  { id:'palette',    cat:'misc', name:'Paleta',        path:'M12 2a10 10 0 0 0 0 20c.8 0 1.6-.11 2.33-.32A1 1 0 0 0 15 20.2v-2.35a2 2 0 0 1 .59-1.42L17 15a2 2 0 0 0 0-2.83l-1-1a2 2 0 0 1 0-2.83L17 7.46a2 2 0 0 0 0-2.83A10 10 0 0 0 12 2z M8.5 12.5 a1 1 0 1 0 2 0 1 1 0 0 0-2 0z M7 8.5 a1 1 0 1 0 2 0 1 1 0 0 0-2 0z M7 15.5 a1 1 0 1 0 2 0 1 1 0 0 0-2 0z' },
+];
+
+// Button presets
+const BTN_PRESETS = [
+  { id:'neon-cyan',   name:'Neon Cyan',    style:'neon',     c1:'#00f5ff', c2:'#007bff' },
+  { id:'neon-pink',   name:'Neon Pink',    style:'neon',     c1:'#ff006e', c2:'#bf00ff' },
+  { id:'neon-green',  name:'Neon Green',   style:'neon',     c1:'#39ff14', c2:'#00f5ff' },
+  { id:'gradient-1',  name:'Ocean',        style:'gradient', c1:'#00c9ff', c2:'#92fe9d' },
+  { id:'gradient-2',  name:'Sunset',       style:'gradient', c1:'#ff6600', c2:'#ff006e' },
+  { id:'gradient-3',  name:'Purple Rain',  style:'gradient', c1:'#bf00ff', c2:'#007bff' },
+  { id:'glass-1',     name:'Glass Blue',   style:'glass',    c1:'#007bff', c2:'#00f5ff' },
+  { id:'glass-2',     name:'Glass Pink',   style:'glass',    c1:'#ff006e', c2:'#bf00ff' },
+  { id:'pixel-1',     name:'Pixel Cyan',   style:'pixel',    c1:'#00f5ff', c2:'#0a0a1a' },
+  { id:'pixel-2',     name:'Pixel Green',  style:'pixel',    c1:'#39ff14', c2:'#0a0a1a' },
+  { id:'cyber-1',     name:'Cyber Yellow', style:'cyber',    c1:'#ffd700', c2:'#ff6600' },
+  { id:'cyber-2',     name:'Cyber Cyan',   style:'cyber',    c1:'#00f5ff', c2:'#0a0a1a' },
+  { id:'retro-1',     name:'Retro Red',    style:'retro',    c1:'#ff2244', c2:'#ffd700' },
+  { id:'retro-2',     name:'Retro Purple', style:'retro',    c1:'#bf00ff', c2:'#ff006e' },
+  { id:'fire-1',      name:'Fire',         style:'fire',     c1:'#ff6600', c2:'#ffd700' },
+  { id:'ice-1',       name:'Ice',          style:'ice',      c1:'#00f5ff', c2:'#ffffff' },
+  { id:'gold-1',      name:'Gold',         style:'gold',     c1:'#ffd700', c2:'#ff6600' },
+  { id:'matrix-1',    name:'Matrix',       style:'matrix',   c1:'#39ff14', c2:'#003300' },
+  { id:'outline-1',   name:'Outline Cyan', style:'outline',  c1:'#00f5ff', c2:'transparent' },
+  { id:'3d-1',        name:'3D Purple',    style:'3d',       c1:'#bf00ff', c2:'#5500aa' },
+];
+
+// =============================================
+// STATE
+// =============================================
+let iconState = {
+  selected: 'star',
+  style: 'neon',
+  color1: '#00f5ff',
+  color2: '#bf00ff',
+  bgColor: 'transparent',
+  size: 96,
+  stroke: 2,
+  radius: 12,
+  glow: 10,
+};
+
+let btnState = {
+  preset: 'neon-cyan',
+  text: 'Click me!',
+  style: 'neon',
+  color1: '#00f5ff',
+  color2: '#007bff',
+  width: 180,
+  height: 48,
+  bradius: 8,
+  fontsize: 16,
+  glow: 12,
+};
+
+// =============================================
+// TABS
+// =============================================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const id = 'tab-' + btn.dataset.tab;
+    document.getElementById(id).classList.add('active');
+  });
+});
+
+// =============================================
+// TOAST
+// =============================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// =============================================
+// COLOR CHIPS FACTORY
+// =============================================
+function buildColorChips(containerId, colors, selectedHex, onChange) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  colors.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'chip' + (c.hex === selectedHex ? ' selected' : '');
+    div.title = c.name;
+    div.style.background = c.hex === 'transparent'
+      ? 'repeating-conic-gradient(#555 0% 25%, #111 0% 50%) 0 0 / 10px 10px'
+      : c.hex;
+    div.addEventListener('click', () => {
+      el.querySelectorAll('.chip').forEach(ch => ch.classList.remove('selected'));
+      div.classList.add('selected');
+      onChange(c.hex);
+    });
+    el.appendChild(div);
+  });
+}
+
+function buildStyleChips(containerId, selectedStyle, onChange) {
+  document.querySelectorAll(`#${containerId} .style-chip`).forEach(chip => {
+    chip.classList.toggle('selected', chip.dataset.style === selectedStyle);
+    chip.addEventListener('click', () => {
+      document.querySelectorAll(`#${containerId} .style-chip`).forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      onChange(chip.dataset.style);
+    });
+  });
+}
+
+// =============================================
+// ICON SECTION
+// =============================================
+function initIcons() {
+  buildColorChips('icon-color-chips',  COLORS,      iconState.color1,  v => { iconState.color1  = v; renderIcon(); updateGallery(); });
+  buildColorChips('icon-color2-chips', COLORS,      iconState.color2,  v => { iconState.color2  = v; renderIcon(); updateGallery(); });
+  buildColorChips('icon-bg-chips',     BG_COLORS,   iconState.bgColor, v => { iconState.bgColor = v; renderIcon(); updateGallery(); });
+  buildStyleChips('icon-style-chips', iconState.style, v => { iconState.style = v; renderIcon(); updateGallery(); });
+  buildIconGrid();
+  renderIcon();
+  updateGallery();
+}
+
+function filterIcons() {
+  buildIconGrid();
+}
+
+function buildIconGrid() {
+  const cat = document.getElementById('icon-category').value;
+  const filtered = cat === 'all' ? ICONS : ICONS.filter(i => i.cat === cat);
+  const grid = document.getElementById('icon-grid');
+  grid.innerHTML = '';
+  filtered.forEach(icon => {
+    const item = document.createElement('div');
+    item.className = 'icon-item' + (icon.id === iconState.selected ? ' selected' : '');
+    item.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="${iconState.color1}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="${icon.path}"/></svg><span>${icon.name}</span>`;
+    item.addEventListener('click', () => {
+      document.querySelectorAll('#icon-grid .icon-item').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+      iconState.selected = icon.id;
+      renderIcon();
+    });
+    grid.appendChild(item);
+  });
+}
+
+function updateIconSizeLabel(v)   { document.getElementById('icon-size-val').textContent   = v; iconState.size   = +v; }
+function updateIconStrokeLabel(v) { document.getElementById('icon-stroke-val').textContent = v; iconState.stroke = +v; }
+function updateIconRadiusLabel(v) { document.getElementById('icon-radius-val').textContent = v; iconState.radius = +v; }
+function updateIconGlowLabel(v)   { document.getElementById('icon-glow-val').textContent   = v; iconState.glow   = +v; }
+
+function getIconObj(id) { return ICONS.find(i => i.id === id); }
+
+function drawIconOnCanvas(canvas, iconId, state) {
+  const icon = getIconObj(iconId);
+  if (!icon) return;
+  const sz = state.size;
+  canvas.width  = sz;
+  canvas.height = sz;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, sz, sz);
+
+  // Background
+  if (state.bgColor && state.bgColor !== 'transparent') {
+    ctx.fillStyle = state.bgColor;
+    roundedRect(ctx, 0, 0, sz, sz, state.radius);
+    ctx.fill();
+  }
+
+  // Style effects
+  const scale = sz / 24;
+  ctx.save();
+  ctx.scale(scale, scale);
+
+  const style = state.style;
+  let strokeColor = state.color1;
+
+  if (style === 'neon') {
+    ctx.shadowColor = state.color1;
+    ctx.shadowBlur  = state.glow;
+    strokeColor = state.color1;
+  } else if (style === 'gradient') {
+    const grd = ctx.createLinearGradient(0, 0, 24, 24);
+    grd.addColorStop(0, state.color1);
+    grd.addColorStop(1, state.color2);
+    ctx.strokeStyle = grd;
+  } else if (style === 'glass') {
+    ctx.globalAlpha = 0.85;
+    strokeColor = state.color1;
+  } else if (style === 'pixel') {
+    ctx.imageSmoothingEnabled = false;
+    strokeColor = state.color1;
+  } else if (style === 'cyber') {
+    ctx.shadowColor = state.color2;
+    ctx.shadowBlur  = state.glow / 2;
+    strokeColor = state.color1;
+  } else if (style === 'retro') {
+    strokeColor = state.color1;
+  } else if (style === 'fire') {
+    const grd = ctx.createLinearGradient(0, 24, 24, 0);
+    grd.addColorStop(0, '#ff2200');
+    grd.addColorStop(0.5, '#ff6600');
+    grd.addColorStop(1, '#ffd700');
+    ctx.strokeStyle = grd;
+    ctx.shadowColor = '#ff4400';
+    ctx.shadowBlur  = state.glow;
+  } else if (style === 'ice') {
+    const grd = ctx.createLinearGradient(0, 0, 24, 24);
+    grd.addColorStop(0, '#00f5ff');
+    grd.addColorStop(1, '#ffffff');
+    ctx.strokeStyle = grd;
+    ctx.shadowColor = '#00f5ff';
+    ctx.shadowBlur  = state.glow;
+  } else if (style === 'gold') {
+    const grd = ctx.createLinearGradient(0, 0, 24, 24);
+    grd.addColorStop(0, '#ffd700');
+    grd.addColorStop(1, '#ff6600');
+    ctx.strokeStyle = grd;
+    ctx.shadowColor = '#ffd700';
+    ctx.shadowBlur  = state.glow;
+  } else if (style === 'matrix') {
+    strokeColor = '#39ff14';
+    ctx.shadowColor = '#39ff14';
+    ctx.shadowBlur  = state.glow;
+  }
+
+  // Draw paths
+  const paths = icon.path.split(' M ').filter(Boolean);
+  paths.forEach((segment, i) => {
+    const d = i === 0 ? segment : 'M ' + segment;
+    const p2d = new Path2D(d);
+    ctx.lineWidth = state.stroke;
+    ctx.lineCap  = 'round';
+    ctx.lineJoin = 'round';
+    if (!['gradient','fire','ice','gold','matrix'].includes(style)) {
+      ctx.strokeStyle = strokeColor;
+    }
+    ctx.stroke(p2d);
+  });
+
+  ctx.restore();
+
+  // Info
+  const info = document.getElementById('icon-info');
+  if (info) {
+    info.textContent = `${icon.name} · ${sz}×${sz}px · Estilo: ${style}`;
+  }
+}
+
+function renderIcon() {
+  const canvas = document.getElementById('icon-canvas');
+  drawIconOnCanvas(canvas, iconState.selected, iconState);
+}
+
+function updateGallery() {
+  const gallery = document.getElementById('icon-gallery');
+  gallery.innerHTML = '';
+  ICONS.forEach(icon => {
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer';
+    const cnv = document.createElement('canvas');
+    const miniState = { ...iconState, size: 40, glow: Math.min(iconState.glow, 8) };
+    drawIconOnCanvas(cnv, icon.id, miniState);
+    const lbl = document.createElement('span');
+    lbl.style.cssText = 'font-size:.6rem;color:var(--text-dim);max-width:48px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center';
+    lbl.textContent = icon.name;
+    wrapper.appendChild(cnv);
+    wrapper.appendChild(lbl);
+    wrapper.addEventListener('click', () => {
+      iconState.selected = icon.id;
+      document.querySelectorAll('#icon-grid .icon-item').forEach(el => {
+        el.classList.toggle('selected', el.querySelector('span') && el.querySelector('span').textContent === icon.name);
+      });
+      renderIcon();
+    });
+    gallery.appendChild(wrapper);
+  });
+}
+
+function downloadIcon() {
+  const canvas = document.getElementById('icon-canvas');
+  const link = document.createElement('a');
+  link.download = `${iconState.selected}-${iconState.style}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('✅ Icono descargado');
+}
+
+function downloadAllIcons() {
+  ICONS.forEach((icon, idx) => {
+    setTimeout(() => {
+      const cnv = document.createElement('canvas');
+      drawIconOnCanvas(cnv, icon.id, iconState);
+      const link = document.createElement('a');
+      link.download = `${icon.id}-${iconState.style}.png`;
+      link.href = cnv.toDataURL('image/png');
+      link.click();
+      if (idx === ICONS.length - 1) showToast(`✅ ${ICONS.length} iconos descargados`);
+    }, idx * 80);
+  });
+}
+
+function copySvgCode() {
+  const icon = getIconObj(iconState.selected);
+  if (!icon) return;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${iconState.size}" height="${iconState.size}" viewBox="0 0 24 24" fill="none" stroke="${iconState.color1}" stroke-width="${iconState.stroke}" stroke-linecap="round" stroke-linejoin="round"><path d="${icon.path}"/></svg>`;
+  navigator.clipboard.writeText(svg).then(() => showToast('📋 SVG copiado'));
+}
+
+// =============================================
+// BUTTON SECTION
+// =============================================
+function initButtons() {
+  buildColorChips('btn-color-chips',  COLORS, btnState.color1, v => { btnState.color1 = v; renderButton(); updateBtnGallery(); });
+  buildColorChips('btn-color2-chips', COLORS, btnState.color2, v => { btnState.color2 = v; renderButton(); updateBtnGallery(); });
+  buildStyleChips('btn-style-chips', btnState.style, v => { btnState.style = v; renderButton(); updateBtnGallery(); });
+  buildBtnPresetGrid();
+  renderButton();
+  updateBtnGallery();
+}
+
+function buildBtnPresetGrid() {
+  const grid = document.getElementById('btn-preset-grid');
+  grid.innerHTML = '';
+  BTN_PRESETS.forEach(preset => {
+    const item = document.createElement('div');
+    item.className = 'preset-item' + (preset.id === btnState.preset ? ' selected' : '');
+    // Mini preview
+    const cnv = document.createElement('canvas');
+    cnv.width = 120; cnv.height = 36;
+    drawButtonOnCanvas(cnv, { ...btnState, preset: preset.id, style: preset.style, color1: preset.c1, color2: preset.c2, width: 112, height: 30, fontsize: 11, bradius: 6, glow: 8 }, btnState.text);
+    const lbl = document.createElement('div');
+    lbl.className = 'preset-label';
+    lbl.textContent = preset.name;
+    item.appendChild(cnv);
+    item.appendChild(lbl);
+    item.addEventListener('click', () => {
+      document.querySelectorAll('#btn-preset-grid .preset-item').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+      btnState.preset = preset.id;
+      btnState.style  = preset.style;
+      btnState.color1 = preset.c1;
+      btnState.color2 = preset.c2;
+      // Sync chips
+      buildColorChips('btn-color-chips',  COLORS, btnState.color1, v => { btnState.color1 = v; renderButton(); updateBtnGallery(); });
+      buildColorChips('btn-color2-chips', COLORS, btnState.color2, v => { btnState.color2 = v; renderButton(); updateBtnGallery(); });
+      buildStyleChips('btn-style-chips', btnState.style, v => { btnState.style = v; renderButton(); updateBtnGallery(); });
+      renderButton();
+    });
+    grid.appendChild(item);
+  });
+}
+
+function updateBtnWidthLabel(v)    { document.getElementById('btn-width-val').textContent   = v; btnState.width    = +v; }
+function updateBtnHeightLabel(v)   { document.getElementById('btn-height-val').textContent  = v; btnState.height   = +v; }
+function updateBtnBRadiusLabel(v)  { document.getElementById('btn-bradius-val').textContent = v; btnState.bradius  = +v; }
+function updateBtnFontsizeLabel(v) { document.getElementById('btn-fontsize-val').textContent= v; btnState.fontsize = +v; }
+function updateBtnGlowLabel(v)     { document.getElementById('btn-glow-val').textContent    = v; btnState.glow     = +v; }
+
+function drawButtonOnCanvas(canvas, state, text) {
+  const W = state.width, H = state.height;
+  canvas.width  = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  const r = Math.min(state.bradius, H / 2, W / 2);
+  const style = state.style;
+  const c1 = state.color1, c2 = state.color2;
+
+  ctx.save();
+
+  if (style === 'neon') {
+    ctx.shadowColor = c1;
+    ctx.shadowBlur  = state.glow;
+    ctx.strokeStyle = c1;
+    ctx.lineWidth   = 2;
+    ctx.fillStyle   = hexToRgba(c1, .08);
+    roundedRect(ctx, 1, 1, W-2, H-2, r);
+    ctx.fill();
+    roundedRect(ctx, 1, 1, W-2, H-2, r);
+    ctx.stroke();
+  } else if (style === 'gradient') {
+    const grd = ctx.createLinearGradient(0, 0, W, H);
+    grd.addColorStop(0, c1);
+    grd.addColorStop(1, c2);
+    ctx.fillStyle = grd;
+    roundedRect(ctx, 0, 0, W, H, r);
+    ctx.fill();
+  } else if (style === 'glass') {
+    ctx.fillStyle   = hexToRgba(c1, .15);
+    ctx.strokeStyle = hexToRgba(c1, .6);
+    ctx.lineWidth   = 1.5;
+    roundedRect(ctx, 0, 0, W, H, r);
+    ctx.fill();
+    roundedRect(ctx, 0.75, 0.75, W-1.5, H-1.5, r);
+    ctx.stroke();
+    // Shine
+    const shine = ctx.createLinearGradient(0, 0, 0, H/2);
+    shine.addColorStop(0, 'rgba(255,255,255,.2)');
+    shine.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = shine;
+    roundedRect(ctx, 2, 2, W-4, H/2-2, r);
+    ctx.fill();
+  } else if (style === 'pixel') {
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle   = c2;
+    ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = c1;
+    ctx.lineWidth   = 3;
+    ctx.setLineDash([4, 0]);
+    ctx.strokeRect(2, 2, W-4, H-4);
+    ctx.setLineDash([]);
+  } else if (style === 'cyber') {
+    ctx.fillStyle   = c2;
+    ctx.fillRect(0, 0, W, H);
+    ctx.shadowColor = c1;
+    ctx.shadowBlur  = state.glow;
+    ctx.strokeStyle = c1;
+    ctx.lineWidth   = 2;
+    ctx.strokeRect(2, 2, W-4, H-4);
+    // Corner clips
+    ctx.strokeStyle = c1;
+    ctx.lineWidth = 2;
+    [[2,2,12,2],[W-14,2,W-2,2],[2,H-2,14,H-2],[W-14,H-2,W-2,H-2]].forEach(([x1,y1,x2,y2]) => {
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    });
+  } else if (style === 'retro') {
+    ctx.fillStyle   = c1;
+    roundedRect(ctx, 0, 0, W, H, 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    roundedRect(ctx, 3, 3+H*0.55, W-3, H*0.42, 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth   = 1.5;
+    roundedRect(ctx, 1, 1, W-2, H-2, 2);
+    ctx.stroke();
+  } else if (style === 'fire') {
+    const grd = ctx.createLinearGradient(0, H, W, 0);
+    grd.addColorStop(0, '#ff2200');
+    grd.addColorStop(0.5, '#ff6600');
+    grd.addColorStop(1, '#ffd700');
+    ctx.fillStyle = grd;
+    roundedRect(ctx, 0, 0, W, H, r);
+    ctx.fill();
+    ctx.shadowColor = '#ff4400';
+    ctx.shadowBlur  = state.glow;
+  } else if (style === 'ice') {
+    const grd = ctx.createLinearGradient(0, 0, W, H);
+    grd.addColorStop(0, '#00f5ff');
+    grd.addColorStop(1, '#a0f8ff');
+    ctx.fillStyle = grd;
+    roundedRect(ctx, 0, 0, W, H, r);
+    ctx.fill();
+    ctx.shadowColor = '#00f5ff';
+    ctx.shadowBlur  = state.glow;
+    // Shimmer
+    ctx.strokeStyle = 'rgba(255,255,255,.4)';
+    ctx.lineWidth   = 1;
+    for (let i = 0; i < W; i += 16) {
+      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i - H, H); ctx.stroke();
+    }
+  } else if (style === 'gold') {
+    const grd = ctx.createLinearGradient(0, 0, W, H);
+    grd.addColorStop(0, '#ffd700');
+    grd.addColorStop(0.5, '#ffe57a');
+    grd.addColorStop(1, '#ff6600');
+    ctx.fillStyle = grd;
+    roundedRect(ctx, 0, 0, W, H, r);
+    ctx.fill();
+    ctx.shadowColor = '#ffd700';
+    ctx.shadowBlur  = state.glow;
+  } else if (style === 'matrix') {
+    ctx.fillStyle = '#003300';
+    roundedRect(ctx, 0, 0, W, H, r);
+    ctx.fill();
+    ctx.strokeStyle = '#39ff14';
+    ctx.lineWidth   = 1.5;
+    ctx.shadowColor = '#39ff14';
+    ctx.shadowBlur  = state.glow;
+    roundedRect(ctx, 1, 1, W-2, H-2, r);
+    ctx.stroke();
+  } else if (style === 'outline') {
+    ctx.strokeStyle = c1;
+    ctx.lineWidth   = 2;
+    ctx.shadowColor = c1;
+    ctx.shadowBlur  = state.glow;
+    ctx.fillStyle   = 'transparent';
+    roundedRect(ctx, 1, 1, W-2, H-2, r);
+    ctx.stroke();
+  } else if (style === '3d') {
+    // Shadow
+    ctx.fillStyle = c2;
+    roundedRect(ctx, 4, 5, W-4, H-4, r);
+    ctx.fill();
+    // Main
+    ctx.fillStyle = c1;
+    roundedRect(ctx, 0, 0, W-4, H-5, r);
+    ctx.fill();
+    // Shine
+    ctx.fillStyle = 'rgba(255,255,255,.2)';
+    roundedRect(ctx, 2, 2, W-8, (H-5)/3, r);
+    ctx.fill();
+  }
+
+  ctx.restore();
+
+  // Text
+  ctx.save();
+  const fontSize = state.fontsize;
+  const textColor = getContrastText(style, c1, c2);
+  if (['neon','matrix','outline'].includes(style)) {
+    ctx.shadowColor = c1;
+    ctx.shadowBlur  = state.glow * 0.6;
+  }
+  ctx.fillStyle  = textColor;
+  ctx.font       = `bold ${fontSize}px "Segoe UI", system-ui, sans-serif`;
+  ctx.textAlign  = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text || 'Button', W/2, H/2);
+  ctx.restore();
+}
+
+function getContrastText(style, c1, c2) {
+  if (['gradient','glass','fire','ice','gold','3d','retro'].includes(style)) return '#ffffff';
+  if (style === 'matrix') return '#39ff14';
+  if (style === 'neon')   return c1;
+  if (style === 'cyber')  return c1;
+  if (style === 'pixel')  return c1;
+  if (style === 'outline') return c1;
+  return '#ffffff';
+}
+
+function renderButton() {
+  const canvas = document.getElementById('btn-canvas');
+  drawButtonOnCanvas(canvas, btnState, document.getElementById('btn-text').value);
+  updateCssCode();
+}
+
+function updateCssCode() {
+  const s = btnState;
+  const text = document.getElementById('btn-text').value;
+  let css = '';
+  if (s.style === 'neon') {
+    css = `.btn-neon {
+  display: inline-block;
+  padding: ${(s.height-s.fontsize*1.5)/2|0}px ${s.width/4|0}px;
+  font-size: ${s.fontsize}px;
+  font-weight: bold;
+  color: ${s.color1};
+  background: ${hexToRgba(s.color1, .08)};
+  border: 2px solid ${s.color1};
+  border-radius: ${s.bradius}px;
+  cursor: pointer;
+  box-shadow: 0 0 ${s.glow}px ${s.color1}, inset 0 0 ${s.glow}px ${hexToRgba(s.color1,.1)};
+  text-shadow: 0 0 8px ${s.color1};
+  transition: all .2s;
+}
+.btn-neon:hover {
+  box-shadow: 0 0 ${s.glow*2}px ${s.color1}, 0 0 ${s.glow*4}px ${s.color1};
+  background: ${hexToRgba(s.color1, .15)};
+}`;
+  } else if (s.style === 'gradient') {
+    css = `.btn-gradient {
+  display: inline-block;
+  padding: ${(s.height-s.fontsize*1.5)/2|0}px ${s.width/4|0}px;
+  font-size: ${s.fontsize}px;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(135deg, ${s.color1}, ${s.color2});
+  border: none;
+  border-radius: ${s.bradius}px;
+  cursor: pointer;
+  transition: opacity .2s, transform .1s;
+}
+.btn-gradient:hover { opacity: .9; transform: translateY(-1px); }
+.btn-gradient:active { transform: translateY(1px); }`;
+  } else if (s.style === 'glass') {
+    css = `.btn-glass {
+  display: inline-block;
+  padding: ${(s.height-s.fontsize*1.5)/2|0}px ${s.width/4|0}px;
+  font-size: ${s.fontsize}px;
+  font-weight: bold;
+  color: #fff;
+  background: ${hexToRgba(s.color1, .15)};
+  border: 1.5px solid ${hexToRgba(s.color1, .6)};
+  border-radius: ${s.bradius}px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: background .2s;
+}
+.btn-glass:hover { background: ${hexToRgba(s.color1, .25)}; }`;
+  } else if (s.style === 'cyber') {
+    css = `.btn-cyber {
+  display: inline-block;
+  position: relative;
+  padding: ${(s.height-s.fontsize*1.5)/2|0}px ${s.width/4|0}px;
+  font-size: ${s.fontsize}px;
+  font-weight: bold;
+  color: ${s.color1};
+  background: ${s.color2};
+  border: 2px solid ${s.color1};
+  border-radius: 0;
+  cursor: pointer;
+  box-shadow: 0 0 ${s.glow}px ${s.color1};
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  transition: box-shadow .2s;
+}
+.btn-cyber:hover { box-shadow: 0 0 ${s.glow*2}px ${s.color1}; }`;
+  } else {
+    css = `/* Estilo: ${s.style} */
+.btn-custom {
+  display: inline-block;
+  width: ${s.width}px;
+  height: ${s.height}px;
+  font-size: ${s.fontsize}px;
+  font-weight: bold;
+  color: #fff;
+  background: ${s.color1};
+  border: none;
+  border-radius: ${s.bradius}px;
+  cursor: pointer;
+  transition: opacity .2s;
+}
+.btn-custom:hover { opacity: .85; }`;
+  }
+  const codeEl = document.getElementById('btn-css-code');
+  if (codeEl) codeEl.textContent = css;
+}
+
+function downloadButton() {
+  const canvas = document.getElementById('btn-canvas');
+  const link = document.createElement('a');
+  link.download = `button-${btnState.style}-${btnState.preset}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('✅ Botón descargado');
+}
+
+function downloadAllButtons() {
+  BTN_PRESETS.forEach((preset, idx) => {
+    setTimeout(() => {
+      const cnv = document.createElement('canvas');
+      drawButtonOnCanvas(cnv, { ...btnState, style: preset.style, color1: preset.c1, color2: preset.c2 }, btnState.text);
+      const link = document.createElement('a');
+      link.download = `button-${preset.id}.png`;
+      link.href = cnv.toDataURL('image/png');
+      link.click();
+      if (idx === BTN_PRESETS.length - 1) showToast(`✅ ${BTN_PRESETS.length} botones descargados`);
+    }, idx * 80);
+  });
+}
+
+function copyCss() {
+  const code = document.getElementById('btn-css-code').textContent;
+  navigator.clipboard.writeText(code).then(() => showToast('📋 CSS copiado'));
+}
+
+function updateBtnGallery() {
+  const gallery = document.getElementById('btn-gallery');
+  gallery.innerHTML = '';
+  BTN_PRESETS.forEach(preset => {
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer';
+    const cnv = document.createElement('canvas');
+    drawButtonOnCanvas(cnv, { ...btnState, style: preset.style, color1: preset.c1, color2: preset.c2, width: 130, height: 38, fontsize: 12, bradius: 6, glow: 8 }, preset.name);
+    const lbl = document.createElement('span');
+    lbl.style.cssText = 'font-size:.65rem;color:var(--text-dim);text-align:center';
+    lbl.textContent = preset.name;
+    wrapper.appendChild(cnv);
+    wrapper.appendChild(lbl);
+    wrapper.addEventListener('click', () => {
+      btnState.preset = preset.id;
+      btnState.style  = preset.style;
+      btnState.color1 = preset.c1;
+      btnState.color2 = preset.c2;
+      buildColorChips('btn-color-chips',  COLORS, btnState.color1, v => { btnState.color1 = v; renderButton(); updateBtnGallery(); });
+      buildColorChips('btn-color2-chips', COLORS, btnState.color2, v => { btnState.color2 = v; renderButton(); updateBtnGallery(); });
+      buildStyleChips('btn-style-chips', btnState.style, v => { btnState.style = v; renderButton(); updateBtnGallery(); });
+      renderButton();
+      document.querySelectorAll('#btn-preset-grid .preset-item').forEach(i => i.classList.remove('selected'));
+      buildBtnPresetGrid();
+    });
+    gallery.appendChild(wrapper);
+  });
+}
+
+// =============================================
+// UTILITIES
+// =============================================
+function roundedRect(ctx, x, y, w, h, r) {
+  if (r <= 0) { ctx.beginPath(); ctx.rect(x, y, w, h); return; }
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function hexToRgba(hex, alpha) {
+  if (!hex || hex === 'transparent') return `rgba(0,0,0,${alpha})`;
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return hex;
+  const r = parseInt(result[1], 16);
+  const g = parseInt(result[2], 16);
+  const b = parseInt(result[3], 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// =============================================
+// INIT
+// =============================================
+document.addEventListener('DOMContentLoaded', () => {
+  initIcons();
+  initButtons();
+});
+</script>
+</body>
+</html>
